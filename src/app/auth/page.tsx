@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Logo } from "@/components/Logo";
@@ -147,9 +148,12 @@ export default function AuthPage() {
         </form>
 
         {tab === "login" && (
-          <a href="#" className="block text-center mt-[18px] text-blue text-[14.5px] font-semibold">
+          <Link
+            href="/auth/mot-de-passe-oublie"
+            className="block text-center mt-[18px] text-blue text-[14.5px] font-semibold"
+          >
             Mot de passe oublié ?
-          </a>
+          </Link>
         )}
       </div>
 

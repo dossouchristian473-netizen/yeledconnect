@@ -5,7 +5,7 @@ export default function ResponsablePresencesPage({ searchParams }: { searchParam
   return (
     <div>
       <SubpageHeader title="Présences" backHref="/responsable/apercu" />
-      <AttendanceOverview date={searchParams.date} />
+      <AttendanceOverview date={searchParams.date} reportsHref="/responsable/comptes-rendus" />
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 const items = [
   { href: "/moniteur/salle", label: "Salle", icon: RoomIcon },
   { href: "/moniteur/enfants", label: "Enfants", icon: KidsIcon },
+  { href: "/moniteur/compte-rendu", label: "Compte rendu", icon: ReportIcon },
   { href: "/moniteur/profil", label: "Profil", icon: UserIcon },
 ];
 
@@ -48,6 +49,14 @@ function KidsIcon({ className }: { className?: string }) {
       <circle cx="17" cy="9" r="2.4" stroke="currentColor" strokeWidth="1.8" />
       <path d="M2.5 20c.6-3.6 2.9-5.6 5.5-5.6s4.9 2 5.5 5.6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
       <path d="M14.5 20c.4-2.6 1.9-4.2 3.9-4.2 1.7 0 3.1 1.1 3.6 3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+function ReportIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
+      <rect x="4.5" y="3.5" width="15" height="17" rx="2.5" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M8 8.5h8M8 12.5h8M8 16.5h5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
     </svg>
   );
 }

@@ -1,8 +1,9 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 
 type Absentee = { child_id: string; first_name: string; last_name: string | null; room_id: string | null };
 
-export async function AttendanceOverview({ date }: { date?: string }) {
+export async function AttendanceOverview({ date, reportsHref }: { date?: string; reportsHref?: string }) {
   const supabase = createClient();
   const selectedDate = date || new Date().toISOString().slice(0, 10);
 
@@ -60,6 +61,18 @@ export async function AttendanceOverview({ date }: { date?: string }) {
           Voir
         </button>
       </form>
+
+      {reportsHref && (
+        <Link
+          href={`${reportsHref}?date=${selectedDate}`}
+          className="flex items-center justify-between bg-card rounded-md2 shadow-card px-[18px] py-3.5 text-[14px] font-semibold text-blue-dark"
+        >
+          Comptes rendus des moniteurs
+          <svg viewBox="0 0 24 24" fill="none" className="w-[15px] h-[15px]">
+            <path d="M9 5l7 7-7 7" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </Link>
+      )}
 
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-teal-bg rounded-lg2 p-[18px] text-center">

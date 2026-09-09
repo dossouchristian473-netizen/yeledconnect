@@ -634,3 +634,32 @@ as $$
         and a.checked_in_at is not null
     );
 $$;
+
+-- ============================================================
+-- v2 — 10.1 Comptes rendus de dimanche (Moniteur)
+-- ============================================================
+-- Un compte rendu texte libre par moniteur, par salle, par dimanche. Les
+-- remarques CIBLÉES sur un enfant en particulier existent déjà via
+-- `moniteur_notes` (section 2) — ceci couvre le compte rendu global de la
+-- salle, pas enfant par enfant.
+create table public.moniteur_reports (
+  id uuid primary key default gen_random_uuid(),
+  moniteur_id uuid not null references public.profiles(id) on delete cascade,
+  room_id uuid not null references public.rooms(id) on delete cascade,
+  sunday_date date not null,
+  report text not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (moniteur_id, room_id, sunday_date)
+);
+
+alter table public.moniteur_reports enable row level security;
+
+-- Même principe que `moniteur_notes` (section 11) : un moniteur NE VOIT QUE
+-- SES PROPRES comptes rendus, jamais ceux d'un collègue. Jamais le Parent.
+create policy "Un moniteur gère uniquement ses propres comptes rendus"
+  on public.moniteur_reports for all using (moniteur_id = auth.uid()) with check (moniteur_id = auth.uid());
+create policy "Responsable/Administrateur lisent tous les comptes rendus"
+  on public.moniteur_reports for select using (public.has_role('responsable') or public.has_role('administrateur'));
+create policy "Administrateur a accès complet" on public.moniteur_reports for all
+  using (public.has_role('administrateur')) with check (public.has_role('administrateur'));

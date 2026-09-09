@@ -5,7 +5,7 @@ export default function AdminPresencesPage({ searchParams }: { searchParams: { d
   return (
     <div>
       <SubpageHeader title="Présences" backHref="/admin/comptes" />
-      <AttendanceOverview date={searchParams.date} />
+      <AttendanceOverview date={searchParams.date} reportsHref="/admin/comptes-rendus" />
     </div>
   );
 }

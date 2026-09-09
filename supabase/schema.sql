@@ -602,3 +602,35 @@ create policy "Administrateur a accès complet" on public.moniteur_notes for all
   using (public.has_role('administrateur')) with check (public.has_role('administrateur'));
 create policy "Administrateur a accès complet" on public.exercise_submissions for all
   using (public.has_role('administrateur')) with check (public.has_role('administrateur'));
+
+-- ============================================================
+-- v2 — 10.2 Présences enrichies : absences calculées automatiquement
+-- ============================================================
+-- Un enfant est "absent" un dimanche donné s'il est inscrit dans une salle
+-- (current_room_id) et qu'aucune présence (attendance.checked_in_at) n'est
+-- enregistrée pour lui à cette date. Fonction calculée plutôt que lignes
+-- "absent" stockées (voir section 11) : reste juste même si un enfant
+-- change de salle ou est ajouté après coup — aucune donnée à corriger a
+-- posteriori.
+--
+-- SECURITY INVOKER (comportement par défaut, pas de "security definer") :
+-- les policies RLS de `children` s'appliquent normalement selon l'appelant.
+-- Un moniteur n'obtient donc que les absents de sa salle, l'accueil/le
+-- responsable/l'administrateur obtiennent tous les absents, exactement
+-- comme pour une requête select classique sur `children`.
+create or replace function public.get_absentees(_sunday_date date, _room_id uuid default null)
+returns table (child_id uuid, first_name text, last_name text, room_id uuid)
+language sql
+stable
+as $$
+  select c.id, c.first_name, c.last_name, c.current_room_id
+  from public.children c
+  where c.current_room_id is not null
+    and (_room_id is null or c.current_room_id = _room_id)
+    and not exists (
+      select 1 from public.attendance a
+      where a.child_id = c.id
+        and a.sunday_date = _sunday_date
+        and a.checked_in_at is not null
+    );
+$$;

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 
 const items = [
   { href: "/responsable/apercu", label: "Aperçu", icon: ChartIcon },
+  { href: "/responsable/presences", label: "Présences", icon: CheckIcon },
   { href: "/responsable/salles", label: "Salles", icon: RoomIcon },
   { href: "/responsable/agenda", label: "Agenda", icon: CalendarIcon },
   { href: "/responsable/exercices", label: "Exercices", icon: QuizIcon },
@@ -39,6 +40,14 @@ function ChartIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className}>
       <path d="M4 20V10M11 20V4M18 20v-7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+function CheckIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
+      <circle cx="12" cy="12" r="8.5" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M8.5 12.3l2.4 2.4 4.6-5.2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }

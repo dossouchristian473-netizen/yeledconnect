@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { SubpageHeader } from "@/components/SubpageHeader";
 import { AttendanceButton } from "@/components/AttendanceButton";
+import { AttendanceSummary } from "@/components/AttendanceSummary";
 
 export default async function AccueilSalleDetailPage({ params }: { params: { id: string } }) {
   const supabase = createClient();
@@ -48,7 +49,12 @@ export default async function AccueilSalleDetailPage({ params }: { params: { id:
           </p>
         </div>
       ) : (
-        <div className="px-6 pt-4 flex flex-col gap-3.5">
+        <>
+          <AttendanceSummary
+            present={children.filter((c) => attendanceFor(c.id)?.checked_in_at).length}
+            absent={children.length - children.filter((c) => attendanceFor(c.id)?.checked_in_at).length}
+          />
+          <div className="px-6 pt-4 flex flex-col gap-3.5">
           {children.map((c) => {
             const att = attendanceFor(c.id);
             return (
@@ -72,7 +78,8 @@ export default async function AccueilSalleDetailPage({ params }: { params: { id:
               </div>
             );
           })}
-        </div>
+          </div>
+        </>
       )}
     </div>
   );

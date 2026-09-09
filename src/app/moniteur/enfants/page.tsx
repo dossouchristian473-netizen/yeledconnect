@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient, getUser } from "@/lib/supabase/server";
 import { SubpageHeader } from "@/components/SubpageHeader";
 import { AttendanceButton } from "@/components/AttendanceButton";
+import { AttendanceSummary } from "@/components/AttendanceSummary";
 
 export default async function MoniteurEnfantsPage() {
   const supabase = createClient();
@@ -66,10 +67,14 @@ export default async function MoniteurEnfantsPage() {
     );
   }
 
+  const presentCount = children.filter((c) => attendanceFor(c.id)?.checked_in_at).length;
+  const absentCount = children.length - presentCount;
+
   return (
     <div>
       <SubpageHeader title="Enfants" backHref="/moniteur/salle" />
-      <div className="px-6 pt-5 flex flex-col gap-3.5">
+      <AttendanceSummary present={presentCount} absent={absentCount} />
+      <div className="px-6 pt-4 flex flex-col gap-3.5">
         {children.map((c) => {
           const att = attendanceFor(c.id);
           return (

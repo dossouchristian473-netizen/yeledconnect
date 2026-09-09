@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient, getUser } from "@/lib/supabase/server";
 import { Logo } from "@/components/Logo";
 import { LogoutButton } from "@/components/LogoutButton";
@@ -63,6 +64,18 @@ export default async function ResponsableApercuPage() {
         <StatCard label="Enfants inscrits" value={childrenCount ?? 0} />
         <StatCard label="Présents aujourd'hui" value={presentTotal} accent />
         <StatCard label="Salles" value={rooms?.length ?? 0} />
+      </div>
+
+      <div className="px-6 pt-4">
+        <Link
+          href="/responsable/messages"
+          className="flex items-center justify-between bg-card rounded-md2 shadow-card px-[18px] py-3.5 text-[14px] font-semibold text-blue-dark"
+        >
+          Messagerie
+          <svg viewBox="0 0 24 24" fill="none" className="w-[15px] h-[15px]">
+            <path d="M9 5l7 7-7 7" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </Link>
       </div>
 
       <div className="px-6 pt-5">

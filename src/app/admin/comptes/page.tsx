@@ -1,4 +1,5 @@
-import { createClient } from "@/lib/supabase/server";
+import Link from "next/link";
+import { createClient, getUser } from "@/lib/supabase/server";
 import { APP_ROLES } from "@/lib/roles";
 import { RoleToggle } from "@/components/RoleToggle";
 import { MoniteurRoomAssign } from "@/components/MoniteurRoomAssign";
@@ -12,6 +13,7 @@ export default async function AdminComptesPage({
 }) {
   const q = searchParams.q?.trim() ?? "";
   const supabase = createClient();
+  const user = await getUser();
 
   let profilesQuery = supabase.from("profiles").select("id, username").order("username");
   if (q) profilesQuery = profilesQuery.ilike("username", `%${q}%`);
@@ -37,9 +39,17 @@ export default async function AdminComptesPage({
         <LogoutButton />
       </div>
 
-      <div className="px-6 pt-4">
-        <h1 className="text-[26px] leading-tight font-semibold">Comptes</h1>
-        <p className="mt-1 text-soft text-[14.5px]">Gérez les rôles et les affectations de chaque compte.</p>
+      <div className="px-6 pt-4 flex items-center justify-between gap-3">
+        <div>
+          <h1 className="text-[26px] leading-tight font-semibold">Comptes</h1>
+          <p className="mt-1 text-soft text-[14.5px]">Gérez les rôles et les affectations de chaque compte.</p>
+        </div>
+        <Link
+          href="/admin/messages"
+          className="rounded-full bg-blue-bg text-blue-dark font-bold text-[12px] px-4 py-2 flex-shrink-0"
+        >
+          Messages
+        </Link>
       </div>
 
       <form action="/admin/comptes" method="get" className="px-6 pt-3">
@@ -62,7 +72,17 @@ export default async function AdminComptesPage({
           const isMoniteur = userRoles.includes("moniteur");
           return (
             <div key={p.id} className="bg-card rounded-lg2 shadow-card p-[18px]">
-              <div className="font-bold text-[15.5px] mb-3">{p.username}</div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="font-bold text-[15.5px]">{p.username}</div>
+                {p.id !== user!.id && (
+                  <Link
+                    href={`/admin/messages/${p.id}`}
+                    className="rounded-full bg-blue-bg text-blue-dark font-bold text-[11.5px] px-3.5 py-[7px] flex-shrink-0"
+                  >
+                    Message
+                  </Link>
+                )}
+              </div>
               <div className="flex flex-wrap gap-2">
                 {APP_ROLES.map((role) => (
                   <RoleToggle

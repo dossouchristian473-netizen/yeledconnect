@@ -3,6 +3,7 @@ import { unwrapOne } from "@/lib/supabase/one";
 import { SubpageHeader } from "@/components/SubpageHeader";
 import { LogoutButton } from "@/components/LogoutButton";
 import { SpaceSwitcher } from "@/components/SpaceSwitcher";
+import { SharePhoneCard } from "@/components/SharePhoneCard";
 import type { AppRole } from "@/lib/roles";
 
 export default async function MoniteurProfilPage() {
@@ -11,7 +12,7 @@ export default async function MoniteurProfilPage() {
 
   // Rôles réels de la base (peut en contenir plusieurs : ex. parent + moniteur).
   const [{ data: profile }, { data: roles }, { data: assignments }] = await Promise.all([
-    supabase.from("profiles").select("username").eq("id", user!.id).single(),
+    supabase.from("profiles").select("username, phone, share_phone_with_parents").eq("id", user!.id).single(),
     supabase.from("user_roles").select("role").eq("user_id", user!.id),
     supabase.from("moniteur_rooms").select("rooms(name)").eq("moniteur_id", user!.id),
   ]);
@@ -45,6 +46,12 @@ export default async function MoniteurProfilPage() {
             ))}
           </div>
         </div>
+
+        <SharePhoneCard
+          userId={user!.id}
+          initialPhone={profile?.phone ?? null}
+          initialShared={profile?.share_phone_with_parents ?? false}
+        />
 
         <div className="mt-[18px] bg-card rounded-lg2 shadow-card overflow-hidden">
           <LogoutButton variant="row" />

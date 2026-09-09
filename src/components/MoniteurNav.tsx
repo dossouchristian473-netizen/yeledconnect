@@ -7,6 +7,7 @@ const items = [
   { href: "/moniteur/salle", label: "Salle", icon: RoomIcon },
   { href: "/moniteur/enfants", label: "Enfants", icon: KidsIcon },
   { href: "/moniteur/compte-rendu", label: "Compte rendu", icon: ReportIcon },
+  { href: "/moniteur/messages", label: "Messages", icon: MessageIcon },
   { href: "/moniteur/profil", label: "Profil", icon: UserIcon },
 ];
 
@@ -57,6 +58,13 @@ function ReportIcon({ className }: { className?: string }) {
     <svg viewBox="0 0 24 24" fill="none" className={className}>
       <rect x="4.5" y="3.5" width="15" height="17" rx="2.5" stroke="currentColor" strokeWidth="1.8" />
       <path d="M8 8.5h8M8 12.5h8M8 16.5h5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+function MessageIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
+      <path d="M3.5 6.5A2.5 2.5 0 0 1 6 4h12a2.5 2.5 0 0 1 2.5 2.5v8A2.5 2.5 0 0 1 18 17H9l-5 4v-4.2a2.5 2.5 0 0 1-.5-1.5v-8Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
     </svg>
   );
 }

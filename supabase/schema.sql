@@ -663,3 +663,142 @@ create policy "Responsable/Administrateur lisent tous les comptes rendus"
   on public.moniteur_reports for select using (public.has_role('responsable') or public.has_role('administrateur'));
 create policy "Administrateur a accès complet" on public.moniteur_reports for all
   using (public.has_role('administrateur')) with check (public.has_role('administrateur'));
+
+-- ============================================================
+-- v2 — 10.3 Messagerie sécurisée
+-- ============================================================
+-- Un moniteur peut choisir de partager son téléphone avec les parents des
+-- enfants de sa salle (bouton dans son profil). Redacté par défaut : voir
+-- la vue `contact_profiles` plus bas, seule façon dont un parent lit ce
+-- champ.
+alter table public.profiles add column if not exists share_phone_with_parents boolean not null default false;
+
+-- Variante de has_role() qui teste un utilisateur ARBITRAIRE plutôt que
+-- l'utilisateur courant : nécessaire pour vérifier le rôle du DESTINATAIRE
+-- d'un message, que l'expéditeur n'a pas forcément le droit de lire via
+-- user_roles directement.
+create or replace function public.user_has_role(_user_id uuid, _role public.app_role)
+returns boolean
+language sql
+security definer
+stable
+as $$
+  select exists (select 1 from public.user_roles where user_id = _user_id and role = _role);
+$$;
+
+-- Règle centrale : qui a le droit d'écrire à qui (section 10.3).
+--   - Administrateur <-> tout le monde.
+--   - Parent <-> moniteur(s) de la salle actuelle d'un de ses enfants.
+--   - Parent <-> responsable (le responsable a une vision globale).
+-- SECURITY DEFINER : la fonction doit pouvoir lire families/children/
+-- moniteur_rooms au-delà de ce que l'appelant peut voir lui-même via RLS,
+-- pour établir le lien parent<->moniteur sans lui donner un accès direct
+-- à ces tables.
+create or replace function public.can_message(_other_user_id uuid)
+returns boolean
+language sql
+security definer
+stable
+as $$
+  select
+    _other_user_id is distinct from auth.uid()
+    and (
+      public.has_role('administrateur') or public.user_has_role(_other_user_id, 'administrateur')
+      or (
+        public.has_role('parent') and public.user_has_role(_other_user_id, 'moniteur')
+        and exists (
+          select 1 from public.families f
+          join public.children c on c.family_id = f.id
+          join public.moniteur_rooms mr on mr.room_id = c.current_room_id
+          where f.parent_id = auth.uid() and mr.moniteur_id = _other_user_id
+        )
+      )
+      or (
+        public.has_role('moniteur') and public.user_has_role(_other_user_id, 'parent')
+        and exists (
+          select 1 from public.families f
+          join public.children c on c.family_id = f.id
+          join public.moniteur_rooms mr on mr.room_id = c.current_room_id
+          where f.parent_id = _other_user_id and mr.moniteur_id = auth.uid()
+        )
+      )
+      or (public.has_role('parent') and public.user_has_role(_other_user_id, 'responsable'))
+      or (public.has_role('responsable') and public.user_has_role(_other_user_id, 'parent'))
+    );
+$$;
+
+create table public.messages (
+  id uuid primary key default gen_random_uuid(),
+  sender_id uuid not null references public.profiles(id) on delete cascade,
+  recipient_id uuid not null references public.profiles(id) on delete cascade,
+  body text not null,
+  created_at timestamptz not null default now(),
+  read_at timestamptz
+);
+
+alter table public.messages enable row level security;
+
+create policy "Un utilisateur voit les messages qu'il a envoyés ou reçus"
+  on public.messages for select using (sender_id = auth.uid() or recipient_id = auth.uid());
+-- Aucune policy update/delete : un message envoyé ne peut pas être modifié.
+-- Le marquage "lu" passe par mark_message_read ci-dessous (colonne read_at
+-- uniquement, jamais le corps du message).
+create policy "Un utilisateur envoie un message à un contact autorisé"
+  on public.messages for insert with check (sender_id = auth.uid() and public.can_message(recipient_id));
+
+create or replace function public.mark_message_read(_message_id uuid)
+returns void
+language plpgsql
+security definer
+as $$
+begin
+  update public.messages set read_at = now()
+  where id = _message_id and recipient_id = auth.uid() and read_at is null;
+end;
+$$;
+
+-- Un parent doit savoir quel moniteur est assigné à la salle de son enfant
+-- pour pouvoir le contacter (moniteur_rooms n'était lisible que par le
+-- moniteur lui-même et le staff jusqu'ici).
+create policy "Un parent voit les moniteurs de la salle de son enfant"
+  on public.moniteur_rooms for select using (
+    room_id in (
+      select c.current_room_id from public.children c
+      join public.families f on f.id = c.family_id
+      where f.parent_id = auth.uid()
+    )
+  );
+
+-- Symétrique : un moniteur doit pouvoir résoudre le parent (via la famille)
+-- d'un enfant de sa salle pour le contacter (families n'était lisible que
+-- par le parent lui-même et le staff — le moniteur n'est pas "staff").
+create policy "Un moniteur voit les familles des enfants de sa salle"
+  on public.families for select using (
+    public.has_role('moniteur') and id in (
+      select c.family_id from public.children c
+      where c.current_room_id in (
+        select room_id from public.moniteur_rooms where moniteur_id = auth.uid()
+      )
+    )
+  );
+
+-- Seule façon pour un utilisateur de résoudre le nom d'un correspondant
+-- (les policies `profiles` ne couvrent que soi-même et le staff — pas de
+-- policy générale "contacts autorisés" sur la table elle-même, car une
+-- policy de ce type exposerait la colonne phone en clair, RLS étant filtré
+-- par ligne et non par colonne). Le filtrage par ligne (`where can_message`)
+-- est donc fait explicitement DANS la vue plutôt que hérité de `profiles`,
+-- et la vue reste volontairement en sémantique "définisseur" (pas de
+-- security_invoker) afin de pouvoir lire `phone` en interne pour la
+-- redaction — mais can_message() lit auth.uid() de la session réelle,
+-- donc le filtrage par ligne reste correct quel que soit l'appelant.
+create view public.contact_profiles as
+  select id, username, share_phone_with_parents,
+    case when share_phone_with_parents then phone else null end as phone
+  from public.profiles
+  where public.can_message(id);
+
+-- Nécessaire pour que le responsable puisse rechercher un parent à
+-- contacter (page Messages) en filtrant par rôle. Lecture seule : l'écriture
+-- reste exclusivement réservée à assign_role/revoke_role (section 6/11).
+create policy "Responsable voit tous les rôles" on public.user_roles for select using (public.has_role('responsable'));

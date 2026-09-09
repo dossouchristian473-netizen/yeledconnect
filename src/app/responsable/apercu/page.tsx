@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient, getUser } from "@/lib/supabase/server";
 import { Logo } from "@/components/Logo";
 import { LogoutButton } from "@/components/LogoutButton";
+import { UnreadBadge } from "@/components/UnreadBadge";
 
 export default async function ResponsableApercuPage() {
   const supabase = createClient();
@@ -71,7 +72,10 @@ export default async function ResponsableApercuPage() {
           href="/responsable/messages"
           className="flex items-center justify-between bg-card rounded-md2 shadow-card px-[18px] py-3.5 text-[14px] font-semibold text-blue-dark"
         >
-          Messagerie
+          <span className="flex items-center gap-2">
+            Messagerie
+            <UnreadBadge userId={user!.id} inline />
+          </span>
           <svg viewBox="0 0 24 24" fill="none" className="w-[15px] h-[15px]">
             <path d="M9 5l7 7-7 7" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" />
           </svg>

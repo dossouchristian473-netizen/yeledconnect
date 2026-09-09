@@ -20,7 +20,7 @@ export default async function MoniteurLayout({ children }: { children: React.Rea
   return (
     <div className="max-w-[560px] mx-auto min-h-screen pb-[110px]">
       {children}
-      <MoniteurNav />
+      <MoniteurNav userId={user.id} />
     </div>
   );
 }

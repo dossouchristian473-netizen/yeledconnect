@@ -5,6 +5,7 @@ import { RoleToggle } from "@/components/RoleToggle";
 import { MoniteurRoomAssign } from "@/components/MoniteurRoomAssign";
 import { Logo } from "@/components/Logo";
 import { LogoutButton } from "@/components/LogoutButton";
+import { UnreadBadge } from "@/components/UnreadBadge";
 
 export default async function AdminComptesPage({
   searchParams,
@@ -46,9 +47,10 @@ export default async function AdminComptesPage({
         </div>
         <Link
           href="/admin/messages"
-          className="rounded-full bg-blue-bg text-blue-dark font-bold text-[12px] px-4 py-2 flex-shrink-0"
+          className="rounded-full bg-blue-bg text-blue-dark font-bold text-[12px] px-4 py-2 flex-shrink-0 flex items-center gap-1.5"
         >
           Messages
+          <UnreadBadge userId={user!.id} inline />
         </Link>
       </div>
 

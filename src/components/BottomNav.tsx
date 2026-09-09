@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { UnreadBadge } from "@/components/UnreadBadge";
 
 const items = [
   { href: "/accueil", label: "Accueil", icon: HomeIcon },
@@ -11,7 +12,7 @@ const items = [
   { href: "/profil", label: "Profil", icon: UserIcon },
 ];
 
-export function BottomNav() {
+export function BottomNav({ userId }: { userId: string }) {
   const pathname = usePathname();
 
   return (
@@ -26,7 +27,10 @@ export function BottomNav() {
               active ? "text-blue-dark" : "text-faint"
             }`}
           >
-            <Icon className="w-[22px] h-[22px]" />
+            <span className="relative">
+              <Icon className="w-[22px] h-[22px]" />
+              {href === "/messages" && <UnreadBadge userId={userId} />}
+            </span>
             <span>{label.toUpperCase()}</span>
           </Link>
         );

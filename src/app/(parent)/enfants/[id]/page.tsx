@@ -1,18 +1,24 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getChildPhotoUrl } from "@/lib/supabase/childPhoto";
 import { SubpageHeader } from "@/components/SubpageHeader";
+import { ChildAvatar } from "@/components/ChildAvatar";
 
 export default async function EnfantDetailPage({ params }: { params: { id: string } }) {
   const supabase = createClient();
 
   const { data: child } = await supabase
     .from("children")
-    .select("id, first_name, last_name, date_of_birth, allergies, special_needs, current_room_id")
+    .select(
+      "id, first_name, last_name, date_of_birth, allergies, special_needs, current_room_id, photo_url, prayer_subject, home_address, second_parent_name, second_parent_phone, second_parent_email, emergency_contact_name, emergency_contact_phone, emergency_contact_relationship, custody_notes"
+    )
     .eq("id", params.id)
     .maybeSingle();
 
   if (!child) notFound();
+
+  const photoUrl = await getChildPhotoUrl(supabase, child.photo_url);
 
   const { data: exercises } = child.current_room_id
     ? await supabase.from("exercises").select("id, title, description").eq("room_id", child.current_room_id)
@@ -37,16 +43,22 @@ export default async function EnfantDetailPage({ params }: { params: { id: strin
 
       <div className="px-6 flex flex-col gap-4">
         <div className="bg-card rounded-lg2 shadow-card p-[22px]">
-          <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#8ec9f5] to-[#5fa8e6] text-white flex items-center justify-center font-bold text-[16px] flex-shrink-0">
-              {child.first_name[0]?.toUpperCase()}
-            </div>
-            <div>
-              <div className="font-bold text-[16px]">
-                {child.first_name} {child.last_name ?? ""}
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3.5 min-w-0">
+              <ChildAvatar photoUrl={photoUrl} firstName={child.first_name} size={48} />
+              <div className="min-w-0">
+                <div className="font-bold text-[16px] truncate">
+                  {child.first_name} {child.last_name ?? ""}
+                </div>
+                <div className="text-faint text-[12.5px] mt-0.5">Né(e) le {child.date_of_birth ?? "—"}</div>
               </div>
-              <div className="text-faint text-[12.5px] mt-0.5">Né(e) le {child.date_of_birth ?? "—"}</div>
             </div>
+            <Link
+              href={`/enfants/${child.id}/modifier`}
+              className="text-blue-dark font-bold text-[12.5px] flex-shrink-0"
+            >
+              Modifier
+            </Link>
           </div>
 
           {(child.allergies || child.special_needs) && (
@@ -67,7 +79,68 @@ export default async function EnfantDetailPage({ params }: { params: { id: strin
               )}
             </div>
           )}
+
+          {child.prayer_subject && (
+            <div className="mt-4 pt-4 border-t border-border">
+              <div className="text-[11px] font-bold tracking-wide text-faint uppercase mb-1">
+                Sujet de prière
+              </div>
+              <p className="text-[14px] text-ink">{child.prayer_subject}</p>
+            </div>
+          )}
         </div>
+
+        {(child.second_parent_name ||
+          child.emergency_contact_name ||
+          child.home_address ||
+          child.custody_notes) && (
+          <div className="bg-card rounded-lg2 shadow-card p-[22px] flex flex-col gap-3.5">
+            <h3 className="text-[15.5px] font-semibold">Contacts &amp; informations familiales</h3>
+
+            {child.home_address && (
+              <div>
+                <div className="text-[11px] font-bold tracking-wide text-faint uppercase mb-1">Adresse</div>
+                <p className="text-[14px] text-ink">{child.home_address}</p>
+              </div>
+            )}
+
+            {child.second_parent_name && (
+              <div>
+                <div className="text-[11px] font-bold tracking-wide text-faint uppercase mb-1">
+                  Deuxième parent
+                </div>
+                <p className="text-[14px] text-ink">{child.second_parent_name}</p>
+                <p className="text-soft text-[13px]">
+                  {[child.second_parent_phone, child.second_parent_email].filter(Boolean).join(" · ")}
+                </p>
+              </div>
+            )}
+
+            {child.emergency_contact_name && (
+              <div>
+                <div className="text-[11px] font-bold tracking-wide text-yellowtext uppercase mb-1">
+                  Contact d&apos;urgence
+                </div>
+                <p className="text-[14px] text-ink">
+                  {child.emergency_contact_name}
+                  {child.emergency_contact_relationship ? ` (${child.emergency_contact_relationship})` : ""}
+                </p>
+                {child.emergency_contact_phone && (
+                  <p className="text-soft text-[13px]">{child.emergency_contact_phone}</p>
+                )}
+              </div>
+            )}
+
+            {child.custody_notes && (
+              <div>
+                <div className="text-[11px] font-bold tracking-wide text-faint uppercase mb-1">
+                  Informations de garde
+                </div>
+                <p className="text-[14px] text-ink whitespace-pre-line">{child.custody_notes}</p>
+              </div>
+            )}
+          </div>
+        )}
 
         {exercises && exercises.length > 0 && (
           <div>

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 
 const items = [
   { href: "/admin/comptes", label: "Comptes", icon: UsersIcon },
+  { href: "/admin/enfants", label: "Enfants", icon: KidsIcon },
   { href: "/admin/salles", label: "Salles", icon: RoomIcon },
   { href: "/admin/profil", label: "Profil", icon: UserIcon },
 ];
@@ -34,6 +35,16 @@ export function AdminNav() {
 }
 
 function UsersIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
+      <circle cx="8" cy="8" r="3" stroke="currentColor" strokeWidth="1.8" />
+      <circle cx="17" cy="9" r="2.4" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M2.5 20c.6-3.6 2.9-5.6 5.5-5.6s4.9 2 5.5 5.6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M14.5 20c.4-2.6 1.9-4.2 3.9-4.2 1.7 0 3.1 1.1 3.6 3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+function KidsIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className}>
       <circle cx="8" cy="8" r="3" stroke="currentColor" strokeWidth="1.8" />

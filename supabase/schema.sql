@@ -506,3 +506,99 @@ $$;
 -- après vous être inscrit une première fois comme parent.
 -- ============================================================
 -- insert into public.user_roles (user_id, role) values ('<uuid-a-remplacer>', 'administrateur');
+
+-- ============================================================
+-- v2 — 10.4 Fiche enfant étendue
+-- ============================================================
+alter table public.children
+  add column if not exists photo_url text,
+  add column if not exists prayer_subject text,
+  add column if not exists home_address text,
+  add column if not exists second_parent_name text,
+  add column if not exists second_parent_phone text,
+  add column if not exists second_parent_email text,
+  add column if not exists emergency_contact_name text,
+  add column if not exists emergency_contact_phone text,
+  add column if not exists emergency_contact_relationship text,
+  add column if not exists custody_notes text;
+
+-- photo_url est "obligatoire à l'inscription" côté produit (voir formulaire
+-- d'onboarding), mais reste nullable en base : une contrainte NOT NULL
+-- casserait les enfants déjà existants et empêcherait l'administrateur de
+-- corriger une fiche incomplète en plusieurs étapes.
+
+-- ---------- Stockage des photos d'enfants ----------
+-- Bucket privé : les photos d'enfants ne sont jamais publiques. L'affichage
+-- passe par une URL signée à durée limitée générée côté serveur.
+insert into storage.buckets (id, name, public)
+values ('child-photos', 'child-photos', false)
+on conflict (id) do nothing;
+
+-- Convention de chemin : "<child_id>/<fichier>". Le premier segment du
+-- chemin identifie l'enfant, sur le même principe que child_id dans les
+-- policies des tables ci-dessus.
+create policy "Un parent gère la photo de ses enfants"
+  on storage.objects for all
+  using (
+    bucket_id = 'child-photos' and
+    (storage.foldername(name))[1]::uuid in (
+      select c.id from public.children c
+      join public.families f on f.id = c.family_id
+      where f.parent_id = auth.uid()
+    )
+  )
+  with check (
+    bucket_id = 'child-photos' and
+    (storage.foldername(name))[1]::uuid in (
+      select c.id from public.children c
+      join public.families f on f.id = c.family_id
+      where f.parent_id = auth.uid()
+    )
+  );
+
+create policy "Un moniteur lit les photos des enfants de sa salle"
+  on storage.objects for select using (
+    bucket_id = 'child-photos' and
+    public.has_role('moniteur') and
+    (storage.foldername(name))[1]::uuid in (
+      select id from public.children where current_room_id in (
+        select room_id from public.moniteur_rooms where moniteur_id = auth.uid()
+      )
+    )
+  );
+
+create policy "Accueil/Responsable lisent toutes les photos"
+  on storage.objects for select using (
+    bucket_id = 'child-photos' and (public.has_role('accueil') or public.has_role('responsable'))
+  );
+
+create policy "Administrateur gère toutes les photos"
+  on storage.objects for all using (
+    bucket_id = 'child-photos' and public.has_role('administrateur')
+  ) with check (
+    bucket_id = 'child-photos' and public.has_role('administrateur')
+  );
+
+-- ============================================================
+-- v2 — 11 Administrateur : accès complet en lecture/écriture
+-- ============================================================
+-- Une policy "ALL" par table, EN PLUS des policies existantes (elles ne sont
+-- jamais retirées — Postgres les combine avec OR). Volontairement exclu :
+-- `user_roles`, qui doit rester modifiable UNIQUEMENT via les fonctions
+-- sécurisées assign_role/revoke_role (l'attribution de rôle est l'action
+-- sensible qui doit conserver son garde-fou, voir section 6 et 11 du cahier
+-- des charges). `rooms`, `attendance`, `events`, `moniteur_rooms`,
+-- `exercises` et `exercise_questions` ont déjà une policy ALL pour
+-- l'administrateur — inutile de la dupliquer ici.
+create policy "Administrateur a accès complet" on public.profiles for all
+  using (public.has_role('administrateur')) with check (public.has_role('administrateur'));
+create policy "Administrateur a accès complet" on public.families for all
+  using (public.has_role('administrateur')) with check (public.has_role('administrateur'));
+create policy "Administrateur a accès complet" on public.children for all
+  using (public.has_role('administrateur')) with check (public.has_role('administrateur'));
+create policy "Administrateur a accès complet" on public.authorized_pickups for all
+  using (public.has_role('administrateur')) with check (public.has_role('administrateur'));
+create policy "Administrateur a accès complet" on public.moniteur_notes for all
+  using (public.has_role('administrateur')) with check (public.has_role('administrateur'));
+create policy "Administrateur a accès complet" on public.exercise_submissions for all
+  using (public.has_role('administrateur')) with check (public.has_role('administrateur'));

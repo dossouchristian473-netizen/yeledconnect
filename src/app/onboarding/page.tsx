@@ -4,26 +4,46 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
-type ChildDraft = { first_name: string; date_of_birth: string };
+type ChildDraft = { first_name: string; date_of_birth: string; photoFile: File | null; photoPreview: string | null };
+
+const emptyChild: ChildDraft = { first_name: "", date_of_birth: "", photoFile: null, photoPreview: null };
 
 export default function OnboardingPage() {
   const [step, setStep] = useState(0);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
-  const [children, setChildren] = useState<ChildDraft[]>([{ first_name: "", date_of_birth: "" }]);
+  const [children, setChildren] = useState<ChildDraft[]>([emptyChild]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const supabase = createClient();
 
-  function updateChild(i: number, field: keyof ChildDraft, value: string) {
+  function updateChild(i: number, field: "first_name" | "date_of_birth", value: string) {
     setChildren((prev) => prev.map((c, idx) => (idx === i ? { ...c, [field]: value } : c)));
   }
 
+  function updateChildPhoto(i: number, file: File | null) {
+    setChildren((prev) =>
+      prev.map((c, idx) => {
+        if (idx !== i) return c;
+        if (c.photoPreview) URL.revokeObjectURL(c.photoPreview);
+        return { ...c, photoFile: file, photoPreview: file ? URL.createObjectURL(file) : null };
+      })
+    );
+  }
+
   async function finish() {
-    setSaving(true);
     setError(null);
+
+    const validChildren = children.filter((c) => c.first_name.trim());
+    const missingPhoto = validChildren.find((c) => !c.photoFile);
+    if (missingPhoto) {
+      setError(`Une photo de ${missingPhoto.first_name} est nécessaire pour continuer.`);
+      return;
+    }
+
+    setSaving(true);
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -46,14 +66,39 @@ export default function OnboardingPage() {
       return;
     }
 
-    const validChildren = children.filter((c) => c.first_name.trim());
     if (validChildren.length > 0) {
-      await supabase.from("children").insert(
-        validChildren.map((c) => ({
-          family_id: family.id,
-          first_name: c.first_name,
-          date_of_birth: c.date_of_birth || null,
-        }))
+      const { data: inserted, error: childrenErr } = await supabase
+        .from("children")
+        .insert(
+          validChildren.map((c) => ({
+            family_id: family.id,
+            first_name: c.first_name,
+            date_of_birth: c.date_of_birth || null,
+          }))
+        )
+        .select("id, first_name");
+
+      if (childrenErr || !inserted) {
+        setError("Impossible d'ajouter les enfants. Réessayez.");
+        setSaving(false);
+        return;
+      }
+
+      // On associe chaque enfant inséré au fichier photo correspondant par
+      // position (même ordre d'insertion que validChildren) puis on upload.
+      await Promise.all(
+        inserted.map(async (row, i) => {
+          const file = validChildren[i].photoFile;
+          if (!file) return;
+          const ext = file.name.split(".").pop() || "jpg";
+          const path = `${row.id}/photo.${ext}`;
+          const { error: uploadErr } = await supabase.storage
+            .from("child-photos")
+            .upload(path, file, { upsert: true });
+          if (!uploadErr) {
+            await supabase.from("children").update({ photo_url: path }).eq("id", row.id);
+          }
+        })
       );
     }
 
@@ -121,13 +166,38 @@ export default function OnboardingPage() {
                   value={c.date_of_birth}
                   onChange={(v) => updateChild(i, "date_of_birth", v)}
                   placeholder="AAAA-MM-JJ"
-                  last
                 />
+                <div>
+                  <label className="block text-[11.5px] font-bold tracking-wide text-faint uppercase mb-2">
+                    Photo de l&apos;enfant *
+                  </label>
+                  <div className="flex items-center gap-3">
+                    {c.photoPreview ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={c.photoPreview}
+                        alt=""
+                        className="w-14 h-14 rounded-full object-cover flex-shrink-0"
+                      />
+                    ) : (
+                      <div className="w-14 h-14 rounded-full bg-blue-bg flex-shrink-0" aria-hidden />
+                    )}
+                    <label className="flex-1 border border-border rounded-full px-[18px] py-3 text-[13.5px] text-soft text-center cursor-pointer">
+                      {c.photoFile ? c.photoFile.name : "Choisir une photo"}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => updateChildPhoto(i, e.target.files?.[0] ?? null)}
+                      />
+                    </label>
+                  </div>
+                </div>
               </div>
             ))}
             <button
               type="button"
-              onClick={() => setChildren((prev) => [...prev, { first_name: "", date_of_birth: "" }])}
+              onClick={() => setChildren((prev) => [...prev, emptyChild])}
               className="w-full border-[1.5px] border-dashed border-[#c7d3e0] rounded-full py-3.5 text-blue-dark font-bold text-[14px] mb-4"
             >
               + Ajouter un autre enfant

@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { createClient, getUser } from "@/lib/supabase/server";
+import { getChildPhotoUrls } from "@/lib/supabase/childPhoto";
 import { SubpageHeader } from "@/components/SubpageHeader";
+import { ChildAvatar } from "@/components/ChildAvatar";
 
 export default async function EnfantsPage() {
   const supabase = createClient();
@@ -15,9 +17,11 @@ export default async function EnfantsPage() {
   const { data: children } = family
     ? await supabase
         .from("children")
-        .select("id, first_name, date_of_birth")
+        .select("id, first_name, date_of_birth, photo_url")
         .eq("family_id", family.id)
-    : { data: [] as { id: string; first_name: string; date_of_birth: string | null }[] };
+    : { data: [] as { id: string; first_name: string; date_of_birth: string | null; photo_url: string | null }[] };
+
+  const photoUrls = await getChildPhotoUrls(supabase, children ?? []);
 
   if (!children || children.length === 0) {
     return (
@@ -51,9 +55,7 @@ export default async function EnfantsPage() {
             href={`/enfants/${c.id}`}
             className="bg-card rounded-md2 shadow-card p-[18px] flex items-center gap-3.5"
           >
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#8ec9f5] to-[#5fa8e6] text-white flex items-center justify-center font-bold text-[16px] flex-shrink-0">
-              {c.first_name[0]?.toUpperCase()}
-            </div>
+            <ChildAvatar photoUrl={photoUrls[c.id]} firstName={c.first_name} size={48} />
             <div>
               <div className="font-bold text-[15.5px]">{c.first_name}</div>
               <div className="text-faint text-[12.5px] mt-0.5">Né(e) le {c.date_of_birth ?? "—"}</div>

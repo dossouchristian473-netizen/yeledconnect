@@ -760,26 +760,52 @@ $$;
 -- Un parent doit savoir quel moniteur est assigné à la salle de son enfant
 -- pour pouvoir le contacter (moniteur_rooms n'était lisible que par le
 -- moniteur lui-même et le staff jusqu'ici).
+--
+-- IMPORTANT — pourquoi ceci passe par une fonction SECURITY DEFINER plutôt
+-- qu'une sous-requête inline : une sous-requête directe sur `children`
+-- déclenche les policies RLS de `children`, dont celle du moniteur relit
+-- `moniteur_rooms` — on revient donc sur la table qu'on est déjà en train
+-- d'évaluer, ce qui produit une "infinite recursion detected in policy for
+-- relation" côté Postgres (observé en production lors du premier
+-- déploiement de cette policy). Une fonction SECURITY DEFINER s'exécute
+-- avec les privilèges de son propriétaire, qui contourne la RLS des tables
+-- qu'elle lit en interne — exactement comme has_role()/can_message() le
+-- font déjà ailleurs dans ce fichier — donc plus de ré-entrée dans la RLS
+-- de `children`/`moniteur_rooms`.
+create or replace function public.parent_visible_room_ids()
+returns setof uuid
+language sql
+security definer
+stable
+as $$
+  select c.current_room_id from public.children c
+  join public.families f on f.id = c.family_id
+  where f.parent_id = auth.uid() and c.current_room_id is not null;
+$$;
+
 create policy "Un parent voit les moniteurs de la salle de son enfant"
-  on public.moniteur_rooms for select using (
-    room_id in (
-      select c.current_room_id from public.children c
-      join public.families f on f.id = c.family_id
-      where f.parent_id = auth.uid()
-    )
-  );
+  on public.moniteur_rooms for select using (room_id in (select public.parent_visible_room_ids()));
 
 -- Symétrique : un moniteur doit pouvoir résoudre le parent (via la famille)
 -- d'un enfant de sa salle pour le contacter (families n'était lisible que
 -- par le parent lui-même et le staff — le moniteur n'est pas "staff").
+-- Même raison que ci-dessus : passe par une fonction SECURITY DEFINER pour
+-- éviter la même recursion (ici entre `families` et `children`).
+create or replace function public.moniteur_visible_family_ids()
+returns setof uuid
+language sql
+security definer
+stable
+as $$
+  select c.family_id from public.children c
+  where c.current_room_id in (
+    select room_id from public.moniteur_rooms where moniteur_id = auth.uid()
+  );
+$$;
+
 create policy "Un moniteur voit les familles des enfants de sa salle"
   on public.families for select using (
-    public.has_role('moniteur') and id in (
-      select c.family_id from public.children c
-      where c.current_room_id in (
-        select room_id from public.moniteur_rooms where moniteur_id = auth.uid()
-      )
-    )
+    public.has_role('moniteur') and id in (select public.moniteur_visible_family_ids())
   );
 
 -- Seule façon pour un utilisateur de résoudre le nom d'un correspondant

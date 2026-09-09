@@ -1,13 +1,11 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getUser } from "@/lib/supabase/server";
 import { SubpageHeader } from "@/components/SubpageHeader";
 import { AttendanceButton } from "@/components/AttendanceButton";
 
 export default async function MoniteurEnfantsPage() {
   const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getUser();
 
   const { data: assignments } = await supabase
     .from("moniteur_rooms")
@@ -15,23 +13,25 @@ export default async function MoniteurEnfantsPage() {
     .eq("moniteur_id", user!.id);
 
   const roomIds = (assignments ?? []).map((a) => a.room_id);
-
-  const { data: children } = roomIds.length
-    ? await supabase
-        .from("children")
-        .select("id, first_name, last_name, date_of_birth, current_room_id")
-        .in("current_room_id", roomIds)
-        .order("first_name")
-    : { data: [] as { id: string; first_name: string; last_name: string | null; date_of_birth: string | null; current_room_id: string | null }[] };
-
   const today = new Date().toISOString().slice(0, 10);
-  const { data: attendanceToday } = roomIds.length
-    ? await supabase
-        .from("attendance")
-        .select("id, child_id, checked_in_at, checked_out_at")
-        .in("room_id", roomIds)
-        .eq("sunday_date", today)
-    : { data: [] as { id: string; child_id: string; checked_in_at: string | null; checked_out_at: string | null }[] };
+
+  const [{ data: children }, { data: attendanceToday }] = roomIds.length
+    ? await Promise.all([
+        supabase
+          .from("children")
+          .select("id, first_name, last_name, date_of_birth, current_room_id")
+          .in("current_room_id", roomIds)
+          .order("first_name"),
+        supabase
+          .from("attendance")
+          .select("id, child_id, checked_in_at, checked_out_at")
+          .in("room_id", roomIds)
+          .eq("sunday_date", today),
+      ])
+    : [
+        { data: [] as { id: string; first_name: string; last_name: string | null; date_of_birth: string | null; current_room_id: string | null }[] },
+        { data: [] as { id: string; child_id: string; checked_in_at: string | null; checked_out_at: string | null }[] },
+      ];
 
   function attendanceFor(childId: string) {
     return attendanceToday?.find((a) => a.child_id === childId) ?? null;

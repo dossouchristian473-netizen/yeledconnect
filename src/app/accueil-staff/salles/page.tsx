@@ -13,17 +13,19 @@ export default async function AccueilSallesPage() {
   const roomIds = (rooms ?? []).map((r) => r.id);
   const today = new Date().toISOString().slice(0, 10);
 
-  const { data: children } = roomIds.length
-    ? await supabase.from("children").select("id, current_room_id").in("current_room_id", roomIds)
-    : { data: [] as { id: string; current_room_id: string | null }[] };
-
-  const { data: attendanceToday } = roomIds.length
-    ? await supabase
-        .from("attendance")
-        .select("child_id, room_id, checked_in_at, checked_out_at")
-        .in("room_id", roomIds)
-        .eq("sunday_date", today)
-    : { data: [] as { child_id: string; room_id: string | null; checked_in_at: string | null; checked_out_at: string | null }[] };
+  const [{ data: children }, { data: attendanceToday }] = roomIds.length
+    ? await Promise.all([
+        supabase.from("children").select("id, current_room_id").in("current_room_id", roomIds),
+        supabase
+          .from("attendance")
+          .select("child_id, room_id, checked_in_at, checked_out_at")
+          .in("room_id", roomIds)
+          .eq("sunday_date", today),
+      ])
+    : [
+        { data: [] as { id: string; current_room_id: string | null }[] },
+        { data: [] as { child_id: string; room_id: string | null; checked_in_at: string | null; checked_out_at: string | null }[] },
+      ];
 
   return (
     <div>

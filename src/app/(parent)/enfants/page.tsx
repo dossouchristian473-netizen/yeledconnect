@@ -1,12 +1,10 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getUser } from "@/lib/supabase/server";
 import { SubpageHeader } from "@/components/SubpageHeader";
 
 export default async function EnfantsPage() {
   const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getUser();
 
   const { data: family } = await supabase
     .from("families")

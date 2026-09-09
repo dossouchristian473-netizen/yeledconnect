@@ -15,11 +15,13 @@ export default async function AdminComptesPage({
 
   let profilesQuery = supabase.from("profiles").select("id, username").order("username");
   if (q) profilesQuery = profilesQuery.ilike("username", `%${q}%`);
-  const { data: profiles } = await profilesQuery;
 
-  const { data: allRoles } = await supabase.from("user_roles").select("user_id, role");
-  const { data: rooms } = await supabase.from("rooms").select("id, name").order("name");
-  const { data: moniteurRooms } = await supabase.from("moniteur_rooms").select("moniteur_id, room_id");
+  const [{ data: profiles }, { data: allRoles }, { data: rooms }, { data: moniteurRooms }] = await Promise.all([
+    profilesQuery,
+    supabase.from("user_roles").select("user_id, role"),
+    supabase.from("rooms").select("id, name").order("name"),
+    supabase.from("moniteur_rooms").select("moniteur_id, room_id"),
+  ]);
 
   function rolesFor(userId: string) {
     return allRoles?.filter((r) => r.user_id === userId).map((r) => r.role) ?? [];

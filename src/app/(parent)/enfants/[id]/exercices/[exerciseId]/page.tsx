@@ -14,18 +14,19 @@ export default async function ExercicePage({ params }: { params: { id: string; e
 
   if (!exercise) notFound();
 
-  const { data: questions } = await supabase
-    .from("exercise_questions_public")
-    .select("id, position, question, choices")
-    .eq("exercise_id", exercise.id)
-    .order("position");
-
-  const { data: submission } = await supabase
-    .from("exercise_submissions")
-    .select("score, total")
-    .eq("exercise_id", exercise.id)
-    .eq("child_id", params.id)
-    .maybeSingle();
+  const [{ data: questions }, { data: submission }] = await Promise.all([
+    supabase
+      .from("exercise_questions_public")
+      .select("id, position, question, choices")
+      .eq("exercise_id", exercise.id)
+      .order("position"),
+    supabase
+      .from("exercise_submissions")
+      .select("score, total")
+      .eq("exercise_id", exercise.id)
+      .eq("child_id", params.id)
+      .maybeSingle(),
+  ]);
 
   return (
     <div>

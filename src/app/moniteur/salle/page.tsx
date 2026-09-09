@@ -1,25 +1,17 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getUser } from "@/lib/supabase/server";
 import { unwrapOne } from "@/lib/supabase/one";
 import { Logo } from "@/components/Logo";
 import { LogoutButton } from "@/components/LogoutButton";
 
 export default async function SallePage() {
   const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getUser();
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("username")
-    .eq("id", user!.id)
-    .single();
-
-  const { data: assignments } = await supabase
-    .from("moniteur_rooms")
-    .select("room_id, rooms(id, name, age_min, age_max, capacity)")
-    .eq("moniteur_id", user!.id);
+  const [{ data: profile }, { data: assignments }] = await Promise.all([
+    supabase.from("profiles").select("username").eq("id", user!.id).single(),
+    supabase.from("moniteur_rooms").select("room_id, rooms(id, name, age_min, age_max, capacity)").eq("moniteur_id", user!.id),
+  ]);
 
   type Room = { id: string; name: string; age_min: number | null; age_max: number | null; capacity: number | null };
   const rooms: Room[] = (assignments ?? [])
@@ -29,17 +21,19 @@ export default async function SallePage() {
   const roomIds = rooms.map((r) => r.id);
   const today = new Date().toISOString().slice(0, 10);
 
-  const { data: children } = roomIds.length
-    ? await supabase.from("children").select("id, current_room_id").in("current_room_id", roomIds)
-    : { data: [] as { id: string; current_room_id: string | null }[] };
-
-  const { data: attendanceToday } = roomIds.length
-    ? await supabase
-        .from("attendance")
-        .select("child_id, checked_in_at, checked_out_at")
-        .in("room_id", roomIds)
-        .eq("sunday_date", today)
-    : { data: [] as { child_id: string; checked_in_at: string | null; checked_out_at: string | null }[] };
+  const [{ data: children }, { data: attendanceToday }] = roomIds.length
+    ? await Promise.all([
+        supabase.from("children").select("id, current_room_id").in("current_room_id", roomIds),
+        supabase
+          .from("attendance")
+          .select("child_id, checked_in_at, checked_out_at")
+          .in("room_id", roomIds)
+          .eq("sunday_date", today),
+      ])
+    : [
+        { data: [] as { id: string; current_room_id: string | null }[] },
+        { data: [] as { child_id: string; checked_in_at: string | null; checked_out_at: string | null }[] },
+      ];
 
   const presentCount =
     attendanceToday?.filter((a) => a.checked_in_at && !a.checked_out_at).length ?? 0;

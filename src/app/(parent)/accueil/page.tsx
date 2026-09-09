@@ -1,25 +1,16 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getUser } from "@/lib/supabase/server";
 import { Logo } from "@/components/Logo";
 import { LogoutButton } from "@/components/LogoutButton";
 
 export default async function AccueilPage() {
   const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getUser();
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("username")
-    .eq("id", user!.id)
-    .single();
-
-  const { data: family } = await supabase
-    .from("families")
-    .select("id, family_name")
-    .eq("parent_id", user!.id)
-    .maybeSingle();
+  const [{ data: profile }, { data: family }] = await Promise.all([
+    supabase.from("profiles").select("username").eq("id", user!.id).single(),
+    supabase.from("families").select("id, family_name").eq("parent_id", user!.id).maybeSingle(),
+  ]);
 
   const { data: children } = family
     ? await supabase.from("children").select("id, first_name, date_of_birth").eq("family_id", family.id)

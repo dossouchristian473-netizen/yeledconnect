@@ -14,18 +14,19 @@ export default async function AccueilSalleDetailPage({ params }: { params: { id:
 
   if (!room) notFound();
 
-  const { data: children } = await supabase
-    .from("children")
-    .select("id, first_name, last_name, date_of_birth")
-    .eq("current_room_id", room.id)
-    .order("first_name");
-
   const today = new Date().toISOString().slice(0, 10);
-  const { data: attendanceToday } = await supabase
-    .from("attendance")
-    .select("id, child_id, checked_in_at, checked_out_at")
-    .eq("room_id", room.id)
-    .eq("sunday_date", today);
+  const [{ data: children }, { data: attendanceToday }] = await Promise.all([
+    supabase
+      .from("children")
+      .select("id, first_name, last_name, date_of_birth")
+      .eq("current_room_id", room.id)
+      .order("first_name"),
+    supabase
+      .from("attendance")
+      .select("id, child_id, checked_in_at, checked_out_at")
+      .eq("room_id", room.id)
+      .eq("sunday_date", today),
+  ]);
 
   function attendanceFor(childId: string) {
     return attendanceToday?.find((a) => a.child_id === childId) ?? null;

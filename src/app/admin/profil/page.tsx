@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getUser } from "@/lib/supabase/server";
 import { SubpageHeader } from "@/components/SubpageHeader";
 import { LogoutButton } from "@/components/LogoutButton";
 import { SpaceSwitcher } from "@/components/SpaceSwitcher";
@@ -6,18 +6,13 @@ import type { AppRole } from "@/lib/roles";
 
 export default async function AdminProfilPage() {
   const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("username")
-    .eq("id", user!.id)
-    .single();
+  const user = await getUser();
 
   // Rôles réels de la base (peut en contenir plusieurs : ex. parent + administrateur).
-  const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", user!.id);
+  const [{ data: profile }, { data: roles }] = await Promise.all([
+    supabase.from("profiles").select("username").eq("id", user!.id).single(),
+    supabase.from("user_roles").select("role").eq("user_id", user!.id),
+  ]);
 
   return (
     <div>

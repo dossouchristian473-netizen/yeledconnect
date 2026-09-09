@@ -13,12 +13,12 @@ export default async function ResponsableExercicesPage() {
     .order("created_at", { ascending: false });
 
   const exerciseIds = (exercises ?? []).map((e) => e.id);
-  const { data: questions } = exerciseIds.length
-    ? await supabase.from("exercise_questions").select("id, exercise_id").in("exercise_id", exerciseIds)
-    : { data: [] as { id: string; exercise_id: string }[] };
-  const { data: submissions } = exerciseIds.length
-    ? await supabase.from("exercise_submissions").select("id, exercise_id").in("exercise_id", exerciseIds)
-    : { data: [] as { id: string; exercise_id: string }[] };
+  const [{ data: questions }, { data: submissions }] = exerciseIds.length
+    ? await Promise.all([
+        supabase.from("exercise_questions").select("id, exercise_id").in("exercise_id", exerciseIds),
+        supabase.from("exercise_submissions").select("id, exercise_id").in("exercise_id", exerciseIds),
+      ])
+    : [{ data: [] as { id: string; exercise_id: string }[] }, { data: [] as { id: string; exercise_id: string }[] }];
 
   return (
     <div>

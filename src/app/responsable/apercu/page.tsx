@@ -1,47 +1,41 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getUser } from "@/lib/supabase/server";
 import { Logo } from "@/components/Logo";
 import { LogoutButton } from "@/components/LogoutButton";
 
 export default async function ResponsableApercuPage() {
   const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getUser();
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("username")
-    .eq("id", user!.id)
-    .single();
+  const today = new Date().toISOString().slice(0, 10);
 
-  const [{ count: familiesCount }, { count: childrenCount }, { data: rooms }] = await Promise.all([
+  const [
+    { data: profile },
+    { count: familiesCount },
+    { count: childrenCount },
+    { data: rooms },
+    { data: attendanceToday },
+    { data: children },
+    { data: upcomingEvents },
+    { data: allBirthdays },
+  ] = await Promise.all([
+    supabase.from("profiles").select("username").eq("id", user!.id).single(),
     supabase.from("families").select("id", { count: "exact", head: true }),
     supabase.from("children").select("id", { count: "exact", head: true }),
     supabase.from("rooms").select("id, name, capacity").order("name"),
+    supabase.from("attendance").select("id, room_id, checked_in_at, checked_out_at").eq("sunday_date", today),
+    supabase.from("children").select("id, current_room_id"),
+    supabase
+      .from("events")
+      .select("id, title, event_date")
+      .gte("event_date", today)
+      .order("event_date", { ascending: true })
+      .limit(3),
+    supabase.from("children").select("id, first_name, date_of_birth").not("date_of_birth", "is", null),
   ]);
-
-  const today = new Date().toISOString().slice(0, 10);
-  const { data: attendanceToday } = await supabase
-    .from("attendance")
-    .select("id, room_id, checked_in_at, checked_out_at")
-    .eq("sunday_date", today);
 
   const presentTotal = attendanceToday?.filter((a) => a.checked_in_at && !a.checked_out_at).length ?? 0;
 
-  const { data: children } = await supabase.from("children").select("id, current_room_id");
-
-  const { data: upcomingEvents } = await supabase
-    .from("events")
-    .select("id, title, event_date")
-    .gte("event_date", today)
-    .order("event_date", { ascending: true })
-    .limit(3);
-
   const now = new Date();
-  const { data: allBirthdays } = await supabase
-    .from("children")
-    .select("id, first_name, date_of_birth")
-    .not("date_of_birth", "is", null);
 
   const birthdaysThisMonth = (allBirthdays ?? [])
     .filter((c) => new Date(c.date_of_birth as string).getUTCMonth() === now.getUTCMonth())

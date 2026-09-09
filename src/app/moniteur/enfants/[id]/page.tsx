@@ -7,9 +7,6 @@ import { NoteForm } from "@/components/NoteForm";
 
 export default async function MoniteurChildPage({ params }: { params: { id: string } }) {
   const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
 
   const { data: child } = await supabase
     .from("children")
@@ -20,25 +17,24 @@ export default async function MoniteurChildPage({ params }: { params: { id: stri
   if (!child) notFound();
 
   const today = new Date().toISOString().slice(0, 10);
-  const { data: attendance } = await supabase
-    .from("attendance")
-    .select("id, checked_in_at, checked_out_at")
-    .eq("child_id", child.id)
-    .eq("sunday_date", today)
-    .maybeSingle();
-
-  // RLS restreint déjà ce select aux notes du moniteur connecté.
-  const { data: notes } = await supabase
-    .from("moniteur_notes")
-    .select("id, note, created_at")
-    .eq("child_id", child.id)
-    .order("created_at", { ascending: false });
-
-  // RLS restreint déjà ces résultats aux exercices des salles du moniteur.
-  const { data: results } = await supabase
-    .from("exercise_submissions")
-    .select("score, total, submitted_at, exercises(title)")
-    .eq("child_id", child.id);
+  // RLS restreint déjà les notes et résultats à ceux visibles par le moniteur connecté.
+  const [{ data: attendance }, { data: notes }, { data: results }] = await Promise.all([
+    supabase
+      .from("attendance")
+      .select("id, checked_in_at, checked_out_at")
+      .eq("child_id", child.id)
+      .eq("sunday_date", today)
+      .maybeSingle(),
+    supabase
+      .from("moniteur_notes")
+      .select("id, note, created_at")
+      .eq("child_id", child.id)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("exercise_submissions")
+      .select("score, total, submitted_at, exercises(title)")
+      .eq("child_id", child.id),
+  ]);
 
   return (
     <div>

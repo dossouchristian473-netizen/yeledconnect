@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getUser } from "@/lib/supabase/server";
 import { unwrapOne } from "@/lib/supabase/one";
 import { SubpageHeader } from "@/components/SubpageHeader";
 import { LogoutButton } from "@/components/LogoutButton";
@@ -7,23 +7,14 @@ import type { AppRole } from "@/lib/roles";
 
 export default async function MoniteurProfilPage() {
   const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("username")
-    .eq("id", user!.id)
-    .single();
+  const user = await getUser();
 
   // Rôles réels de la base (peut en contenir plusieurs : ex. parent + moniteur).
-  const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", user!.id);
-
-  const { data: assignments } = await supabase
-    .from("moniteur_rooms")
-    .select("rooms(name)")
-    .eq("moniteur_id", user!.id);
+  const [{ data: profile }, { data: roles }, { data: assignments }] = await Promise.all([
+    supabase.from("profiles").select("username").eq("id", user!.id).single(),
+    supabase.from("user_roles").select("role").eq("user_id", user!.id),
+    supabase.from("moniteur_rooms").select("rooms(name)").eq("moniteur_id", user!.id),
+  ]);
 
   const roomNames = (assignments ?? [])
     .map((a) => unwrapOne(a.rooms)?.name)

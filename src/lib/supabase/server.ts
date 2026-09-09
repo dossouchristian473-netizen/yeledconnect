@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
@@ -26,3 +27,15 @@ export function createClient() {
     }
   );
 }
+
+// Mémorisé par requête (React.cache) : le layout ET la page appellent tous les
+// deux getUser() pour la même navigation. Sans ce cache, chaque appel refait
+// un aller-retour réseau vers le serveur Auth de Supabase — ici, un seul
+// aller-retour est fait et sa réponse est réutilisée partout dans la requête.
+export const getUser = cache(async () => {
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  return user;
+});

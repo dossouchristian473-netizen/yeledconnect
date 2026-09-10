@@ -19,7 +19,7 @@ export function ClassesGrid({ classes }: { classes: ClassInfo[] }) {
 
   return (
     <>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 nav:grid-cols-4 gap-3">
         {classes.map((c) => (
           <div key={c.id} className="bg-card rounded-lg2 shadow-card p-[18px] text-center">
             <span

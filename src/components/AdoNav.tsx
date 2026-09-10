@@ -1,3 +1,5 @@
+"use client";
+
 import { SpaceNav, type SpaceNavItem } from "@/components/SpaceNav";
 
 const items: SpaceNavItem[] = [

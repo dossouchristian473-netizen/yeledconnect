@@ -4,6 +4,12 @@ const config: Config = {
   content: ["./src/**/*.{ts,tsx}"],
   theme: {
     extend: {
+      screens: {
+        // Seuil de bascule mobile/desktop pour BottomNav : en dessous, la
+        // barre flottante en bas d'écran ; à partir de 820px, une navbar
+        // horizontale en haut.
+        nav: "820px",
+      },
       colors: {
         bg: "#f2f6fb",
         card: "#ffffff",

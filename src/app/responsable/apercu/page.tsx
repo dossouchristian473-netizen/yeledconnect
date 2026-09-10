@@ -67,7 +67,7 @@ export default async function ResponsableApercuPage() {
         <StatCard label="Salles" value={rooms?.length ?? 0} />
       </div>
 
-      <div className="px-6 pt-4">
+      <div className="px-6 pt-4 flex flex-col gap-2.5">
         <Link
           href="/responsable/messages"
           className="flex items-center justify-between bg-card rounded-md2 shadow-card px-[18px] py-3.5 text-[14px] font-semibold text-blue-dark"
@@ -76,6 +76,15 @@ export default async function ResponsableApercuPage() {
             Messagerie
             <UnreadBadge userId={user!.id} inline />
           </span>
+          <svg viewBox="0 0 24 24" fill="none" className="w-[15px] h-[15px]">
+            <path d="M9 5l7 7-7 7" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </Link>
+        <Link
+          href="/responsable/annonces"
+          className="flex items-center justify-between bg-card rounded-md2 shadow-card px-[18px] py-3.5 text-[14px] font-semibold text-blue-dark"
+        >
+          Annonces de classe
           <svg viewBox="0 0 24 24" fill="none" className="w-[15px] h-[15px]">
             <path d="M9 5l7 7-7 7" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" />
           </svg>

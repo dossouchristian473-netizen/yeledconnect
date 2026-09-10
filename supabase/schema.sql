@@ -1029,3 +1029,64 @@ create policy "Un parent voit le profil du compte ado de son enfant"
     )
   );
 
+-- ============================================================
+-- Ajustements — Exercices : type (quiz / pdf / texte)
+-- ============================================================
+-- Un exercice n'est plus forcément un quiz : "content" sert au texte libre
+-- (consignes, devoir), "file_path" au PDF téléchargeable (bucket
+-- exercise-files, privé comme child-photos — URL signée à la demande).
+-- exercise_questions/exercise_submissions restent inchangées et ne
+-- s'appliquent qu'aux exercices de type 'quiz'.
+alter table public.exercises add column if not exists type text not null default 'quiz' check (type in ('quiz', 'pdf', 'texte'));
+alter table public.exercises add column if not exists content text;
+alter table public.exercises add column if not exists file_path text;
+
+insert into storage.buckets (id, name, public)
+values ('exercise-files', 'exercise-files', false)
+on conflict (id) do nothing;
+
+create policy "Tout utilisateur authentifié lit les fichiers d'exercice"
+  on storage.objects for select using (
+    bucket_id = 'exercise-files' and auth.uid() is not null
+  );
+create policy "Responsable/Administrateur gèrent les fichiers d'exercice"
+  on storage.objects for all using (
+    bucket_id = 'exercise-files' and (public.has_role('responsable') or public.has_role('administrateur'))
+  ) with check (
+    bucket_id = 'exercise-files' and (public.has_role('responsable') or public.has_role('administrateur'))
+  );
+
+-- ============================================================
+-- Ajustements — Annonces centralisées par classe (10.7 élargi)
+-- ============================================================
+create table public.class_announcements (
+  id uuid primary key default gen_random_uuid(),
+  room_id uuid not null references public.rooms(id) on delete cascade,
+  title text not null,
+  content text not null,
+  created_by uuid references public.profiles(id),
+  created_at timestamptz not null default now()
+);
+
+alter table public.class_announcements enable row level security;
+
+-- Réutilise parent_visible_room_ids() (déjà défini plus haut pour la
+-- messagerie) plutôt qu'une sous-requête inline, pour rester cohérent avec
+-- le principe déjà établi d'éviter toute nouvelle récursion RLS.
+create policy "Un parent voit les annonces des classes de ses enfants"
+  on public.class_announcements for select using (
+    room_id in (select public.parent_visible_room_ids())
+  );
+create policy "Un moniteur gère les annonces de sa salle"
+  on public.class_announcements for all using (
+    room_id in (select room_id from public.moniteur_rooms where moniteur_id = auth.uid())
+  ) with check (
+    room_id in (select room_id from public.moniteur_rooms where moniteur_id = auth.uid())
+  );
+create policy "Responsable/Administrateur gèrent toutes les annonces"
+  on public.class_announcements for all using (
+    public.has_role('responsable') or public.has_role('administrateur')
+  ) with check (
+    public.has_role('responsable') or public.has_role('administrateur')
+  );
+

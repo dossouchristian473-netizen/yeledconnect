@@ -33,8 +33,8 @@ export default async function EnfantDetailPage({ params }: { params: { id: strin
     : { data: null };
 
   const { data: exercises } = child.current_room_id
-    ? await supabase.from("exercises").select("id, title, description").eq("room_id", child.current_room_id)
-    : { data: [] as { id: string; title: string; description: string | null }[] };
+    ? await supabase.from("exercises").select("id, title, description, type").eq("room_id", child.current_room_id)
+    : { data: [] as { id: string; title: string; description: string | null; type: string }[] };
 
   const exerciseIds = (exercises ?? []).map((e) => e.id);
   const { data: submissions } = exerciseIds.length
@@ -183,7 +183,11 @@ export default async function EnfantDetailPage({ params }: { params: { id: strin
                       <div className="font-bold text-[15px] truncate">{ex.title}</div>
                       {ex.description && <p className="text-soft text-[13px] mt-0.5 truncate">{ex.description}</p>}
                     </div>
-                    {sub ? (
+                    {ex.type !== "quiz" ? (
+                      <span className="rounded-full bg-blue-bg text-blue-dark font-bold text-[11px] tracking-wide uppercase px-3.5 py-[7px] flex-shrink-0">
+                        {ex.type === "pdf" ? "PDF" : "Voir"}
+                      </span>
+                    ) : sub ? (
                       <span className="rounded-full bg-teal-bg text-teal-dark font-bold text-[12px] px-3.5 py-[7px] flex-shrink-0">
                         {sub.score}/{sub.total}
                       </span>

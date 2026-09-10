@@ -2,9 +2,12 @@ import Link from "next/link";
 import { createClient, getUser } from "@/lib/supabase/server";
 import { getRoomColorMap } from "@/lib/supabase/roomColors";
 import { getChildPhotoUrls } from "@/lib/supabase/childPhoto";
+import { unwrapOne } from "@/lib/supabase/one";
 import { ChildAvatar } from "@/components/ChildAvatar";
 import { Logo } from "@/components/Logo";
 import { LogoutButton } from "@/components/LogoutButton";
+
+type AnnouncementRoom = { name: string };
 
 export default async function AccueilPage() {
   const supabase = createClient();
@@ -30,9 +33,15 @@ export default async function AccueilPage() {
         }[],
       };
 
-  const [roomColors, photoUrls] = await Promise.all([
+  const [roomColors, photoUrls, { data: announcements }] = await Promise.all([
     getRoomColorMap(supabase),
     getChildPhotoUrls(supabase, children ?? []),
+    // RLS restreint déjà aux annonces des classes où ce parent a un enfant.
+    supabase
+      .from("class_announcements")
+      .select("id, title, content, created_at, room:room_id(name)")
+      .order("created_at", { ascending: false })
+      .limit(5),
   ]);
 
   return (
@@ -91,6 +100,26 @@ export default async function AccueilPage() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {announcements && announcements.length > 0 && (
+        <div className="px-6 pt-5">
+          <h3 className="text-[15.5px] font-semibold mb-3">Annonces de classe</h3>
+          <div className="flex flex-col gap-3">
+            {announcements.map((a) => {
+              const room = unwrapOne<AnnouncementRoom>(a.room);
+              return (
+                <div key={a.id} className="bg-card rounded-lg2 shadow-card p-[18px]">
+                  <span className="rounded-full bg-blue-bg text-blue-dark font-bold text-[10.5px] tracking-wide uppercase px-2.5 py-[3px]">
+                    {room?.name ?? "Salle"}
+                  </span>
+                  <h4 className="font-semibold text-[15px] mt-1.5">{a.title}</h4>
+                  <p className="text-[14px] text-ink mt-1 whitespace-pre-line">{a.content}</p>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>

@@ -9,7 +9,7 @@ export default async function ResponsableExercicesPage() {
 
   const { data: exercises } = await supabase
     .from("exercises")
-    .select("id, title, room:room_id(name)")
+    .select("id, title, type, room:room_id(name)")
     .order("created_at", { ascending: false });
 
   const exerciseIds = (exercises ?? []).map((e) => e.id);
@@ -33,13 +33,19 @@ export default async function ResponsableExercicesPage() {
           const room = unwrapOne<{ name: string }>(ex.room);
           const qCount = questions?.filter((q) => q.exercise_id === ex.id).length ?? 0;
           const sCount = submissions?.filter((s) => s.exercise_id === ex.id).length ?? 0;
+          const typeLabel = ex.type === "pdf" ? "PDF" : ex.type === "texte" ? "Texte" : "Quiz";
           return (
             <div key={ex.id} className="bg-card rounded-lg2 shadow-card p-[18px] flex items-center justify-between gap-3">
               <div>
-                <h3 className="text-[16px] font-semibold mb-1">{ex.title}</h3>
+                <div className="flex items-center gap-2 mb-1">
+                  <h3 className="text-[16px] font-semibold">{ex.title}</h3>
+                  <span className="rounded-full bg-blue-bg text-blue-dark font-bold text-[10.5px] tracking-wide uppercase px-2.5 py-[3px]">
+                    {typeLabel}
+                  </span>
+                </div>
                 <p className="text-soft text-[13.5px]">
-                  {room?.name ?? "Salle inconnue"} · {qCount} question{qCount > 1 ? "s" : ""} · {sCount} réponse
-                  {sCount > 1 ? "s" : ""}
+                  {room?.name ?? "Salle inconnue"}
+                  {ex.type === "quiz" ? ` · ${qCount} question${qCount > 1 ? "s" : ""} · ${sCount} réponse${sCount > 1 ? "s" : ""}` : ""}
                 </p>
               </div>
               <DeleteRowButton table="exercises" id={ex.id} />

@@ -97,6 +97,16 @@ export default async function SallePage() {
               </svg>
             </Link>
           </div>
+
+          <Link
+            href="/moniteur/annonces"
+            className="flex items-center justify-between bg-card rounded-md2 shadow-card px-[18px] py-3.5 text-[14px] font-semibold text-blue-dark"
+          >
+            Annonces de classe
+            <svg viewBox="0 0 24 24" fill="none" className="w-[15px] h-[15px]">
+              <path d="M9 5l7 7-7 7" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </Link>
         </div>
       )}
     </div>

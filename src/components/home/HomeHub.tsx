@@ -25,7 +25,7 @@ export async function HomeHub() {
     // casser sa largeur, ce conteneur en hérite directement.
     <div className="flex flex-col gap-7 pb-4">
       <HeroBanner />
-      <ClassesSection />
+      <ClassesSection canEdit={canEdit} />
       <div className="px-6 grid grid-cols-1 min-[480px]:grid-cols-2 gap-6">
         <EventsSection canEdit={canEdit} />
         <PhotosSection canEdit={canEdit} />

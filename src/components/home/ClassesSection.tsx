@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { formatAgeRange } from "@/lib/rooms";
 import { ClassesGrid } from "@/components/home/ClassesGrid";
 
-export async function ClassesSection() {
+export async function ClassesSection({ canEdit }: { canEdit: boolean }) {
   const supabase = createClient();
 
   const [{ data: rooms }, { data: assignments }] = await Promise.all([
@@ -44,7 +44,7 @@ export async function ClassesSection() {
       {classes.length === 0 ? (
         <p className="text-soft text-[14px]">Aucune classe créée pour le moment.</p>
       ) : (
-        <ClassesGrid classes={classes} />
+        <ClassesGrid classes={classes} canEdit={canEdit} />
       )}
     </section>
   );

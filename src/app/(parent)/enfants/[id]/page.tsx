@@ -3,11 +3,9 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getChildPhotoUrl } from "@/lib/supabase/childPhoto";
 import { unwrapOne } from "@/lib/supabase/one";
-import { computeAge } from "@/lib/age";
 import { SubpageHeader } from "@/components/SubpageHeader";
 import { ChildAvatar } from "@/components/ChildAvatar";
 import { RoomIcon } from "@/components/RoomIcon";
-import { CreateAdoAccountForm } from "@/components/CreateAdoAccountForm";
 
 type Room = { name: string; color: string | null; icon: string | null };
 
@@ -26,7 +24,6 @@ export default async function EnfantDetailPage({ params }: { params: { id: strin
 
   const room = unwrapOne<Room>(child.room);
   const photoUrl = await getChildPhotoUrl(supabase, child.photo_url);
-  const age = computeAge(child.date_of_birth);
 
   const { data: adoProfile } = child.ado_user_id
     ? await supabase.from("profiles").select("username").eq("id", child.ado_user_id).maybeSingle()
@@ -163,8 +160,16 @@ export default async function EnfantDetailPage({ params }: { params: { id: strin
           </div>
         )}
 
-        {age !== null && age >= 11 && (
-          <CreateAdoAccountForm childId={child.id} adoUsername={adoProfile?.username ?? null} />
+        {adoProfile && (
+          <div className="bg-card rounded-lg2 shadow-card p-[18px]">
+            <h3 className="text-[15px] font-semibold mb-2">Compte ado</h3>
+            <p className="text-[14px] text-ink">
+              Identifiant : <span className="font-bold">{adoProfile.username}</span>
+            </p>
+            <p className="text-soft text-[13px] mt-1.5">
+              Géré par l&apos;administrateur — contactez-le pour réinitialiser le mot de passe.
+            </p>
+          </div>
         )}
 
         {exercises && exercises.length > 0 && (

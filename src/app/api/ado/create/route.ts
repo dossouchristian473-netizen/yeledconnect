@@ -1,10 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient, getUser } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { unwrapOne } from "@/lib/supabase/one";
 import { computeAge } from "@/lib/age";
-
-type Family = { parent_id: string };
 
 export async function POST(request: Request) {
   const user = await getUser();
@@ -34,20 +31,17 @@ export async function POST(request: Request) {
 
   const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
   const isAdmin = roles?.some((r) => r.role === "administrateur");
+  if (!isAdmin) {
+    return NextResponse.json({ error: "Seul un administrateur peut créer un compte ado." }, { status: 403 });
+  }
 
   const { data: child } = await supabase
     .from("children")
-    .select("id, date_of_birth, ado_user_id, family:family_id(parent_id)")
+    .select("id, date_of_birth, ado_user_id")
     .eq("id", childId)
     .maybeSingle();
 
   if (!child) return NextResponse.json({ error: "Enfant introuvable." }, { status: 404 });
-
-  const family = unwrapOne<Family>(child.family);
-  const isOwnParent = family?.parent_id === user.id;
-  if (!isAdmin && !isOwnParent) {
-    return NextResponse.json({ error: "Non autorisé." }, { status: 403 });
-  }
 
   if (child.ado_user_id) {
     return NextResponse.json({ error: "Un compte ado existe déjà pour cet enfant." }, { status: 409 });

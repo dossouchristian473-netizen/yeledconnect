@@ -8,7 +8,7 @@ import { Logo } from "@/components/Logo";
 
 export default function AuthPage() {
   const [tab, setTab] = useState<"login" | "signup">("login");
-  const [loginMode, setLoginMode] = useState<"email" | "identifiant">("email");
+  const [mode, setMode] = useState<"email" | "identifiant">("email");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -28,7 +28,7 @@ export default function AuthPage() {
 
     if (tab === "login") {
       const loginEmail =
-        loginMode === "identifiant"
+        mode === "identifiant"
           ? `${email.trim().toLowerCase().replace(/[^a-z0-9._-]/g, "")}@yeledconnect.local`
           : email;
       const { error } = await supabase.auth.signInWithPassword({ email: loginEmail, password });
@@ -100,91 +100,101 @@ export default function AuthPage() {
           ))}
         </div>
 
-        {tab === "login" && (
-          <div className="flex gap-2 mb-4 text-[13px] font-semibold">
-            {(["email", "identifiant"] as const).map((m) => (
-              <button
-                key={m}
-                type="button"
-                onClick={() => setLoginMode(m)}
-                className={`flex-1 py-2 rounded-full border ${
-                  loginMode === m ? "border-blue-dark text-blue-dark bg-blue-bg" : "border-border text-faint"
-                }`}
-              >
-                {m === "email" ? "Parent / Staff" : "Ado (identifiant)"}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {!(tab === "login" && loginMode === "identifiant") && (
-          <>
+        <div className="flex gap-2 mb-4 text-[13px] font-semibold">
+          {(["email", "identifiant"] as const).map((m) => (
             <button
+              key={m}
               type="button"
-              onClick={handleGoogle}
-              className="w-full border border-border bg-white rounded-full py-3.5 text-[15px] font-semibold flex items-center justify-center gap-2.5"
+              onClick={() => setMode(m)}
+              className={`flex-1 py-2 rounded-full border ${
+                mode === m ? "border-blue-dark text-blue-dark bg-blue-bg" : "border-border text-faint"
+              }`}
             >
-              <GoogleIcon /> Continuer avec Google
+              {m === "email" ? "Parent / Staff" : "Ado (identifiant)"}
             </button>
+          ))}
+        </div>
 
-            <div className="flex items-center gap-3 my-5 text-faint text-[11.5px] font-semibold tracking-wide">
-              <div className="flex-1 h-px bg-border" /> OU PAR EMAIL <div className="flex-1 h-px bg-border" />
-            </div>
+        {tab === "signup" && mode === "identifiant" ? (
+          <div className="bg-blue-bg rounded-lg2 p-5 text-center">
+            <p className="text-[14px] text-ink leading-relaxed">
+              Les comptes ados sont créés uniquement par un administrateur, depuis la fiche de l&apos;enfant.
+              Demandez-lui de vous transmettre votre identifiant et votre mot de passe, puis connectez-vous
+              depuis l&apos;onglet Connexion.
+            </p>
+          </div>
+        ) : (
+          <>
+            {mode === "email" && (
+              <>
+                <button
+                  type="button"
+                  onClick={handleGoogle}
+                  className="w-full border border-border bg-white rounded-full py-3.5 text-[15px] font-semibold flex items-center justify-center gap-2.5"
+                >
+                  <GoogleIcon /> Continuer avec Google
+                </button>
+
+                <div className="flex items-center gap-3 my-5 text-faint text-[11.5px] font-semibold tracking-wide">
+                  <div className="flex-1 h-px bg-border" /> OU PAR EMAIL <div className="flex-1 h-px bg-border" />
+                </div>
+              </>
+            )}
+
+            <form onSubmit={handleSubmit}>
+              <div className="mb-4">
+                <label className="block text-[11.5px] font-bold tracking-wide text-faint uppercase mb-2">
+                  {mode === "identifiant" ? "Identifiant" : "Email"}
+                </label>
+                <input
+                  type={mode === "identifiant" ? "text" : "email"}
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder={mode === "identifiant" ? "lea.dupont" : "vous@exemple.com"}
+                  className="w-full border border-border rounded-full px-[18px] py-3.5 text-[15px]"
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-[11.5px] font-bold tracking-wide text-faint uppercase mb-2">
+                  Mot de passe
+                </label>
+                <input
+                  type="password"
+                  required
+                  minLength={6}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full border border-border rounded-full px-[18px] py-3.5 text-[15px]"
+                />
+              </div>
+
+              {error && <p className="text-danger text-[13px] font-medium -mt-2 mb-3.5">{error}</p>}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full rounded-full py-4 text-[16px] font-bold text-white bg-gradient-to-br from-[#57b3ef] to-blue-dark shadow-[0_12px_24px_-10px_rgba(44,134,204,0.55)] disabled:opacity-60"
+              >
+                {loading ? "..." : tab === "login" ? "Se connecter" : "S'inscrire"}
+              </button>
+            </form>
+
+            {tab === "login" && mode === "email" && (
+              <Link
+                href="/auth/mot-de-passe-oublie"
+                className="block text-center mt-[18px] text-blue text-[14.5px] font-semibold"
+              >
+                Mot de passe oublié ?
+              </Link>
+            )}
+            {tab === "login" && mode === "identifiant" && (
+              <p className="text-center mt-[18px] text-faint text-[13px]">
+                Mot de passe oublié ? Demandez à l&apos;administrateur.
+              </p>
+            )}
           </>
-        )}
-
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label className="block text-[11.5px] font-bold tracking-wide text-faint uppercase mb-2">
-              {tab === "login" && loginMode === "identifiant" ? "Identifiant" : "Email"}
-            </label>
-            <input
-              type={tab === "login" && loginMode === "identifiant" ? "text" : "email"}
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder={tab === "login" && loginMode === "identifiant" ? "lea.dupont" : "vous@exemple.com"}
-              className="w-full border border-border rounded-full px-[18px] py-3.5 text-[15px]"
-            />
-          </div>
-          <div className="mb-4">
-            <label className="block text-[11.5px] font-bold tracking-wide text-faint uppercase mb-2">
-              Mot de passe
-            </label>
-            <input
-              type="password"
-              required
-              minLength={6}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              className="w-full border border-border rounded-full px-[18px] py-3.5 text-[15px]"
-            />
-          </div>
-
-          {error && <p className="text-danger text-[13px] font-medium -mt-2 mb-3.5">{error}</p>}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-full py-4 text-[16px] font-bold text-white bg-gradient-to-br from-[#57b3ef] to-blue-dark shadow-[0_12px_24px_-10px_rgba(44,134,204,0.55)] disabled:opacity-60"
-          >
-            {loading ? "..." : tab === "login" ? "Se connecter" : "S'inscrire"}
-          </button>
-        </form>
-
-        {tab === "login" && loginMode === "email" && (
-          <Link
-            href="/auth/mot-de-passe-oublie"
-            className="block text-center mt-[18px] text-blue text-[14.5px] font-semibold"
-          >
-            Mot de passe oublié ?
-          </Link>
-        )}
-        {tab === "login" && loginMode === "identifiant" && (
-          <p className="text-center mt-[18px] text-faint text-[13px]">
-            Mot de passe oublié ? Demandez à un parent ou à l&apos;administrateur.
-          </p>
         )}
       </div>
 

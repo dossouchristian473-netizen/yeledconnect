@@ -29,8 +29,8 @@ export default async function AdminComptesPage({
   function rolesFor(userId: string) {
     return allRoles?.filter((r) => r.user_id === userId).map((r) => r.role) ?? [];
   }
-  function roomFor(userId: string) {
-    return moniteurRooms?.find((mr) => mr.moniteur_id === userId)?.room_id ?? null;
+  function roomsFor(userId: string) {
+    return moniteurRooms?.filter((mr) => mr.moniteur_id === userId).map((mr) => mr.room_id) ?? [];
   }
 
   return (
@@ -45,13 +45,21 @@ export default async function AdminComptesPage({
           <h1 className="text-[26px] leading-tight font-semibold">Comptes</h1>
           <p className="mt-1 text-soft text-[14.5px]">Gérez les rôles et les affectations de chaque compte.</p>
         </div>
-        <Link
-          href="/admin/messages"
-          className="rounded-full bg-blue-bg text-blue-dark font-bold text-[12px] px-4 py-2 flex-shrink-0 flex items-center gap-1.5"
-        >
-          Messages
-          <UnreadBadge userId={user!.id} inline />
-        </Link>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <Link
+            href="/admin/annonces"
+            className="rounded-full bg-blue-bg text-blue-dark font-bold text-[12px] px-4 py-2 flex items-center gap-1.5"
+          >
+            Annonces
+          </Link>
+          <Link
+            href="/admin/messages"
+            className="rounded-full bg-blue-bg text-blue-dark font-bold text-[12px] px-4 py-2 flex items-center gap-1.5"
+          >
+            Messages
+            <UnreadBadge userId={user!.id} inline />
+          </Link>
+        </div>
       </div>
 
       <form action="/admin/comptes" method="get" className="px-6 pt-3">
@@ -98,9 +106,9 @@ export default async function AdminComptesPage({
               </div>
 
               {isMoniteur && (
-                <div className="mt-3.5 pt-3.5 border-t border-border flex items-center gap-2.5">
-                  <span className="text-[12px] font-semibold text-faint">Salle assignée :</span>
-                  <MoniteurRoomAssign userId={p.id} rooms={rooms ?? []} currentRoomId={roomFor(p.id)} />
+                <div className="mt-3.5 pt-3.5 border-t border-border">
+                  <span className="text-[12px] font-semibold text-faint block mb-2">Salles assignées :</span>
+                  <MoniteurRoomAssign userId={p.id} rooms={rooms ?? []} currentRoomIds={roomsFor(p.id)} />
                 </div>
               )}
             </div>

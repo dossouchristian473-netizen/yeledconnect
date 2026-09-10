@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { formatAgeRange } from "@/lib/rooms";
-import { DeleteRowButton } from "@/components/DeleteRowButton";
+import { DeleteRoomButton } from "@/components/DeleteRoomButton";
 import { RoomIcon } from "@/components/RoomIcon";
 
 export async function RoomsManager({ newHref }: { newHref: string }) {
@@ -26,7 +26,7 @@ export async function RoomsManager({ newHref }: { newHref: string }) {
       {rooms?.map((room) => {
         const enrolled = children?.filter((c) => c.current_room_id === room.id).length ?? 0;
         return (
-          <div key={room.id} className="bg-card rounded-lg2 shadow-card p-[18px] flex items-center justify-between gap-3">
+          <div key={room.id} className="bg-card rounded-lg2 shadow-card p-[18px] flex items-start justify-between gap-3">
             <div className="flex items-center gap-3.5 min-w-0">
               <span
                 className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0"
@@ -42,7 +42,7 @@ export async function RoomsManager({ newHref }: { newHref: string }) {
                 </p>
               </div>
             </div>
-            <DeleteRowButton table="rooms" id={room.id} />
+            <DeleteRoomButton roomId={room.id} />
           </div>
         );
       })}

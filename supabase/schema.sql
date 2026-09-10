@@ -372,14 +372,16 @@ begin
 end;
 $$;
 
--- Planifie l'exécution automatique le 1er de chaque mois à 6h (nécessite
--- l'extension pg_cron, activable dans Database → Extensions).
--- create extension if not exists pg_cron with schema extensions;
--- select cron.schedule(
---   'sync-birthday-events-monthly',
---   '0 6 1 * *',
---   $$select public.sync_birthday_events();$$
--- );
+-- Planifie l'exécution automatique le 1er de chaque mois à 6h.
+-- Activé le 2026-09-11 sur la base de prod (jobid 1, voir cron.job) suite à
+-- la demande de Christian ; une synchronisation manuelle a aussi été
+-- lancée immédiatement pour créer les événements du mois en cours.
+create extension if not exists pg_cron with schema extensions;
+select cron.schedule(
+  'sync-birthday-events-monthly',
+  '0 6 1 * *',
+  $$select public.sync_birthday_events();$$
+);
 
 -- ============================================================
 -- Espace pré-ados : exercices notés

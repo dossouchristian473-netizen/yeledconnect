@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { Fraunces, Inter } from "next/font/google";
+import { Baloo_2, Inter } from "next/font/google";
 import "./globals.css";
 
-const fraunces = Fraunces({
+const baloo = Baloo_2({
   subsets: ["latin"],
-  weight: ["500", "600", "700"],
-  variable: "--font-fraunces",
+  weight: ["500", "600", "700", "800"],
+  variable: "--font-baloo",
 });
 
 const inter = Inter({
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fr">
-      <body className={`${fraunces.variable} ${inter.variable} font-sans bg-bg text-ink`}>
+      <body className={`${baloo.variable} ${inter.variable} font-sans bg-bg text-ink`}>
         {children}
       </body>
     </html>

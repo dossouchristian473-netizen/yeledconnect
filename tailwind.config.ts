@@ -24,9 +24,16 @@ const config: Config = {
         yellowbg: "#fdeec9",
         yellowtext: "#a6740b",
         danger: "#e6485c",
+        // Les 4 classes d'âge (voir rooms.color en base) — David/Joseph/
+        // Gédéon/Daniel. Utilisées partout où une classe/salle précise doit
+        // être identifiée visuellement, à la place du bleu générique.
+        david: "#A7C7E7",
+        joseph: "#FFC9DE",
+        gedeon: "#FFFACD",
+        daniel: "#C1E1C1",
       },
       fontFamily: {
-        serif: ["var(--font-fraunces)", "serif"],
+        serif: ["var(--font-baloo)", "sans-serif"],
         sans: ["var(--font-inter)", "sans-serif"],
       },
       borderRadius: {

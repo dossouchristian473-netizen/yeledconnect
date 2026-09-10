@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { unwrapOne } from "@/lib/supabase/one";
+import { getChildPhotoUrls } from "@/lib/supabase/childPhoto";
 import { AttendanceButton } from "@/components/AttendanceButton";
+import { ChildAvatar } from "@/components/ChildAvatar";
 import { Logo } from "@/components/Logo";
 import { LogoutButton } from "@/components/LogoutButton";
 
@@ -20,8 +22,9 @@ export default async function RecherchePage({
     allergies: string | null;
     special_needs: string | null;
     current_room_id: string | null;
+    photo_url: string | null;
     families: { family_name: string } | { family_name: string }[] | null;
-    room: { name: string } | { name: string }[] | null;
+    room: { name: string; color: string | null } | { name: string; color: string | null }[] | null;
     authorized_pickups: { full_name: string; relationship: string | null }[] | null;
   };
 
@@ -30,12 +33,14 @@ export default async function RecherchePage({
     const { data } = await supabase
       .from("children")
       .select(
-        "id, first_name, last_name, date_of_birth, allergies, special_needs, current_room_id, families(family_name), room:current_room_id(name), authorized_pickups(full_name, relationship)"
+        "id, first_name, last_name, date_of_birth, allergies, special_needs, current_room_id, photo_url, families(family_name), room:current_room_id(name, color), authorized_pickups(full_name, relationship)"
       )
       .or(`first_name.ilike.%${q}%,last_name.ilike.%${q}%`)
       .limit(20);
     children = (data as ChildRow[] | null) ?? [];
   }
+
+  const photoUrls = await getChildPhotoUrls(supabase, children);
 
   const today = new Date().toISOString().slice(0, 10);
   const childIds = children.map((c) => c.id);
@@ -86,9 +91,7 @@ export default async function RecherchePage({
           return (
             <div key={c.id} className="bg-card rounded-lg2 shadow-card p-[18px]">
               <div className="flex items-center gap-3.5">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#8ec9f5] to-[#5fa8e6] text-white flex items-center justify-center font-bold text-[16px] flex-shrink-0">
-                  {c.first_name[0]?.toUpperCase()}
-                </div>
+                <ChildAvatar photoUrl={photoUrls[c.id]} firstName={c.first_name} size={48} color={room?.color} />
                 <div className="min-w-0 flex-1">
                   <div className="font-bold text-[15.5px] truncate">
                     {c.first_name} {c.last_name ?? ""}

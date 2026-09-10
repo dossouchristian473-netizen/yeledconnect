@@ -15,7 +15,7 @@ export default async function AdminEnfantDetailPage({ params }: { params: { id: 
       )
       .eq("id", params.id)
       .maybeSingle(),
-    supabase.from("rooms").select("id, name").order("name"),
+    supabase.from("rooms").select("id, name, color").order("age_min"),
   ]);
 
   if (!child) notFound();

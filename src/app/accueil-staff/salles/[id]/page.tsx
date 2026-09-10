@@ -1,15 +1,19 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getChildPhotoUrls } from "@/lib/supabase/childPhoto";
+import { formatAgeRange } from "@/lib/rooms";
 import { SubpageHeader } from "@/components/SubpageHeader";
 import { AttendanceButton } from "@/components/AttendanceButton";
 import { AttendanceSummary } from "@/components/AttendanceSummary";
+import { ChildAvatar } from "@/components/ChildAvatar";
+import { RoomIcon } from "@/components/RoomIcon";
 
 export default async function AccueilSalleDetailPage({ params }: { params: { id: string } }) {
   const supabase = createClient();
 
   const { data: room } = await supabase
     .from("rooms")
-    .select("id, name, age_min, age_max, capacity")
+    .select("id, name, age_min, age_max, capacity, color, icon")
     .eq("id", params.id)
     .maybeSingle();
 
@@ -19,7 +23,7 @@ export default async function AccueilSalleDetailPage({ params }: { params: { id:
   const [{ data: children }, { data: attendanceToday }] = await Promise.all([
     supabase
       .from("children")
-      .select("id, first_name, last_name, date_of_birth")
+      .select("id, first_name, last_name, date_of_birth, photo_url")
       .eq("current_room_id", room.id)
       .order("first_name"),
     supabase
@@ -29,6 +33,8 @@ export default async function AccueilSalleDetailPage({ params }: { params: { id:
       .eq("sunday_date", today),
   ]);
 
+  const photoUrls = await getChildPhotoUrls(supabase, children ?? []);
+
   function attendanceFor(childId: string) {
     return attendanceToday?.find((a) => a.child_id === childId) ?? null;
   }
@@ -36,10 +42,16 @@ export default async function AccueilSalleDetailPage({ params }: { params: { id:
   return (
     <div>
       <SubpageHeader title={room.name} backHref="/accueil-staff/salles" />
-      <p className="px-6 -mt-3 mb-1 text-soft text-[14px]">
-        {room.age_min != null && room.age_max != null ? `${room.age_min}-${room.age_max} ans` : "Tous âges"}
+      <div className="px-6 -mt-3 mb-1 flex items-center gap-1.5 text-soft text-[14px]">
+        <span
+          className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
+          style={{ backgroundColor: room.color ?? "#e7edf5" }}
+        >
+          <RoomIcon icon={room.icon} className="w-3.5 h-3.5" />
+        </span>
+        {formatAgeRange(room.age_min, room.age_max)}
         {room.capacity != null ? ` · capacité ${room.capacity}` : ""}
-      </p>
+      </div>
 
       {!children || children.length === 0 ? (
         <div className="flex flex-col items-center text-center px-8 pt-12">
@@ -59,9 +71,7 @@ export default async function AccueilSalleDetailPage({ params }: { params: { id:
             const att = attendanceFor(c.id);
             return (
               <div key={c.id} className="bg-card rounded-md2 shadow-card p-[18px] flex items-center gap-3.5">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#8ec9f5] to-[#5fa8e6] text-white flex items-center justify-center font-bold text-[16px] flex-shrink-0">
-                  {c.first_name[0]?.toUpperCase()}
-                </div>
+                <ChildAvatar photoUrl={photoUrls[c.id]} firstName={c.first_name} size={48} color={room.color} />
                 <div className="min-w-0 flex-1">
                   <div className="font-bold text-[15.5px] truncate">
                     {c.first_name} {c.last_name ?? ""}

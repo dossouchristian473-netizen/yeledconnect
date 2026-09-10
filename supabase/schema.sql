@@ -828,3 +828,31 @@ create view public.contact_profiles as
 -- contacter (page Messages) en filtrant par rôle. Lecture seule : l'écriture
 -- reste exclusivement réservée à assign_role/revoke_role (section 6/11).
 create policy "Responsable voit tous les rôles" on public.user_roles for select using (public.has_role('responsable'));
+
+-- ============================================================
+-- Identité visuelle v2 — 4 classes bibliques (David/Joseph/Gédéon/Daniel)
+-- ============================================================
+-- Chaque salle porte désormais une couleur pastel et une icône en plus de
+-- sa tranche d'âge. `icon` est une clé texte simple (shield/star/flame/
+-- crown), pas un caractère accentué, pour rester facile à utiliser dans un
+-- switch côté application.
+alter table public.rooms
+  add column if not exists color text,
+  add column if not exists icon text;
+
+-- Sur un projet neuf (pas de salles existantes), les 4 classes de
+-- référence. Sur un projet déjà en place, ne pas relancer cet insert tel
+-- quel : préférer renommer les salles existantes (UPDATE par id) pour
+-- conserver les références children.current_room_id / attendance.room_id /
+-- events.room_id, qui n'ont pas de cascade — c'est ce qui a été fait pour
+-- ce projet (3 salles de test renommées + 1 salle "Joseph" ajoutée), voir
+-- le commit associé pour le détail.
+insert into public.rooms (name, age_min, age_max, capacity, color, icon)
+select * from (values
+  ('David', 3, 5, 20, '#A7C7E7', 'shield'),
+  ('Joseph', 6, 8, 20, '#FFC9DE', 'star'),
+  ('Gédéon', 9, 11, 20, '#FFFACD', 'flame'),
+  ('Daniel', 12, null, 20, '#C1E1C1', 'crown')
+) as v(name, age_min, age_max, capacity, color, icon)
+where not exists (select 1 from public.rooms);
+

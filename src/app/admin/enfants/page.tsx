@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getChildPhotoUrls } from "@/lib/supabase/childPhoto";
+import { getRoomColorMap } from "@/lib/supabase/roomColors";
 import { unwrapOne } from "@/lib/supabase/one";
 import { ChildAvatar } from "@/components/ChildAvatar";
 import { Logo } from "@/components/Logo";
@@ -20,19 +21,23 @@ export default async function AdminEnfantsPage({
     last_name: string | null;
     date_of_birth: string | null;
     photo_url: string | null;
+    current_room_id: string | null;
     families: { family_name: string } | { family_name: string }[] | null;
   };
 
   let query = supabase
     .from("children")
-    .select("id, first_name, last_name, date_of_birth, photo_url, families(family_name)")
+    .select("id, first_name, last_name, date_of_birth, photo_url, current_room_id, families(family_name)")
     .order("first_name")
     .limit(50);
   if (q) query = query.or(`first_name.ilike.%${q}%,last_name.ilike.%${q}%`);
 
   const { data } = await query;
   const children = (data as ChildRow[] | null) ?? [];
-  const photoUrls = await getChildPhotoUrls(supabase, children);
+  const [photoUrls, roomColors] = await Promise.all([
+    getChildPhotoUrls(supabase, children),
+    getRoomColorMap(supabase),
+  ]);
 
   return (
     <div>
@@ -69,7 +74,12 @@ export default async function AdminEnfantsPage({
               href={`/admin/enfants/${c.id}`}
               className="bg-card rounded-lg2 shadow-card p-[18px] flex items-center gap-3.5"
             >
-              <ChildAvatar photoUrl={photoUrls[c.id]} firstName={c.first_name} size={48} />
+              <ChildAvatar
+                photoUrl={photoUrls[c.id]}
+                firstName={c.first_name}
+                size={48}
+                color={c.current_room_id ? roomColors[c.current_room_id] : null}
+              />
               <div className="min-w-0 flex-1">
                 <div className="font-bold text-[15.5px] truncate">
                   {c.first_name} {c.last_name ?? ""}

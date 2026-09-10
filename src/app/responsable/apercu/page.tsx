@@ -23,7 +23,7 @@ export default async function ResponsableApercuPage() {
     supabase.from("profiles").select("username").eq("id", user!.id).single(),
     supabase.from("families").select("id", { count: "exact", head: true }),
     supabase.from("children").select("id", { count: "exact", head: true }),
-    supabase.from("rooms").select("id, name, capacity").order("name"),
+    supabase.from("rooms").select("id, name, capacity, color").order("age_min"),
     supabase.from("attendance").select("id, room_id, checked_in_at, checked_out_at").eq("sunday_date", today),
     supabase.from("children").select("id, current_room_id"),
     supabase
@@ -104,7 +104,10 @@ export default async function ResponsableApercuPage() {
                     </span>
                   </div>
                   <div className="h-[7px] bg-border rounded-full overflow-hidden">
-                    <div className="h-full bg-blue-dark rounded-full" style={{ width: `${pct}%` }} />
+                    <div
+                      className="h-full rounded-full"
+                      style={{ width: `${pct}%`, backgroundColor: room.color ?? "#2c86cc" }}
+                    />
                   </div>
                 </div>
               );

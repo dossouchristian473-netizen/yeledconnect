@@ -1,8 +1,11 @@
 import Link from "next/link";
 import { createClient, getUser } from "@/lib/supabase/server";
+import { getRoomColorMap } from "@/lib/supabase/roomColors";
+import { getChildPhotoUrls } from "@/lib/supabase/childPhoto";
 import { SubpageHeader } from "@/components/SubpageHeader";
 import { AttendanceButton } from "@/components/AttendanceButton";
 import { AttendanceSummary } from "@/components/AttendanceSummary";
+import { ChildAvatar } from "@/components/ChildAvatar";
 
 export default async function MoniteurEnfantsPage() {
   const supabase = createClient();
@@ -20,7 +23,7 @@ export default async function MoniteurEnfantsPage() {
     ? await Promise.all([
         supabase
           .from("children")
-          .select("id, first_name, last_name, date_of_birth, current_room_id")
+          .select("id, first_name, last_name, date_of_birth, current_room_id, photo_url")
           .in("current_room_id", roomIds)
           .order("first_name"),
         supabase
@@ -30,9 +33,14 @@ export default async function MoniteurEnfantsPage() {
           .eq("sunday_date", today),
       ])
     : [
-        { data: [] as { id: string; first_name: string; last_name: string | null; date_of_birth: string | null; current_room_id: string | null }[] },
+        { data: [] as { id: string; first_name: string; last_name: string | null; date_of_birth: string | null; current_room_id: string | null; photo_url: string | null }[] },
         { data: [] as { id: string; child_id: string; checked_in_at: string | null; checked_out_at: string | null }[] },
       ];
+
+  const [roomColors, photoUrls] = await Promise.all([
+    getRoomColorMap(supabase),
+    getChildPhotoUrls(supabase, children ?? []),
+  ]);
 
   function attendanceFor(childId: string) {
     return attendanceToday?.find((a) => a.child_id === childId) ?? null;
@@ -80,9 +88,12 @@ export default async function MoniteurEnfantsPage() {
           return (
             <div key={c.id} className="bg-card rounded-md2 shadow-card p-[18px] flex items-center gap-3.5">
               <Link href={`/moniteur/enfants/${c.id}`} className="flex items-center gap-3.5 flex-1 min-w-0">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#8ec9f5] to-[#5fa8e6] text-white flex items-center justify-center font-bold text-[16px] flex-shrink-0">
-                  {c.first_name[0]?.toUpperCase()}
-                </div>
+                <ChildAvatar
+                  photoUrl={photoUrls[c.id]}
+                  firstName={c.first_name}
+                  size={48}
+                  color={c.current_room_id ? roomColors[c.current_room_id] : null}
+                />
                 <div className="min-w-0">
                   <div className="font-bold text-[15.5px] truncate">
                     {c.first_name} {c.last_name ?? ""}

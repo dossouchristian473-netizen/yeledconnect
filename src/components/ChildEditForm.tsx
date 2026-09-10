@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { ChildAvatar } from "@/components/ChildAvatar";
 
-type Room = { id: string; name: string };
+type Room = { id: string; name: string; color?: string | null };
 
 type ChildData = {
   id: string;
@@ -31,11 +31,13 @@ export function ChildEditForm({
   photoUrl,
   backHref,
   rooms,
+  initialRoomColor,
 }: {
   child: ChildData;
   photoUrl: string | null;
   backHref: string;
   rooms?: Room[];
+  initialRoomColor?: string | null;
 }) {
   const router = useRouter();
   const supabase = createClient();
@@ -61,6 +63,10 @@ export function ChildEditForm({
   const [photoPreview, setPhotoPreview] = useState<string | null>(photoUrl);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const selectedRoomColor = rooms
+    ? rooms.find((r) => r.id === fields.current_room_id)?.color ?? null
+    : initialRoomColor ?? null;
 
   function set<K extends keyof typeof fields>(key: K, value: string) {
     setFields((prev) => ({ ...prev, [key]: value }));
@@ -127,7 +133,12 @@ export function ChildEditForm({
   return (
     <div className="px-6 flex flex-col gap-4 pb-8">
       <div className="bg-card rounded-lg2 shadow-card p-[22px] flex items-center gap-4">
-        <ChildAvatar photoUrl={photoPreview} firstName={fields.first_name || "?"} size={56} />
+        <ChildAvatar
+          photoUrl={photoPreview}
+          firstName={fields.first_name || "?"}
+          size={56}
+          color={selectedRoomColor}
+        />
         <label className="flex-1 border border-border rounded-full px-[18px] py-3 text-[13.5px] text-soft text-center cursor-pointer">
           {photoFile ? photoFile.name : "Changer la photo"}
           <input

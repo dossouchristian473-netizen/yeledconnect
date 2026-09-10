@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { RoomIcon } from "@/components/RoomIcon";
 
 type Absentee = { child_id: string; first_name: string; last_name: string | null; room_id: string | null };
 
@@ -9,7 +10,7 @@ export async function AttendanceOverview({ date, reportsHref }: { date?: string;
 
   const [{ data: rooms }, { data: allChildren }, { data: attendanceForDate }, { data: absentees }, { data: history }] =
     await Promise.all([
-      supabase.from("rooms").select("id, name").order("name"),
+      supabase.from("rooms").select("id, name, color, icon").order("age_min"),
       supabase.from("children").select("id, current_room_id").not("current_room_id", "is", null),
       supabase
         .from("attendance")
@@ -100,15 +101,26 @@ export async function AttendanceOverview({ date, reportsHref }: { date?: string;
               return (
                 <div key={room.id} className="bg-card rounded-lg2 shadow-card p-[18px]">
                   <div className="flex items-center justify-between mb-1">
-                    <h4 className="font-semibold text-[15px]">{room.name}</h4>
+                    <h4 className="font-semibold text-[15px] flex items-center gap-2">
+                      <span
+                        className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
+                        style={{ backgroundColor: room.color ?? "#e7edf5" }}
+                      >
+                        <RoomIcon icon={room.icon} className="w-3.5 h-3.5" />
+                      </span>
+                      {room.name}
+                    </h4>
                     <span className="text-faint text-[12.5px] font-semibold">
                       {present}/{enrolled} présent{present > 1 ? "s" : ""}
                     </span>
                   </div>
                   <div className="h-[7px] bg-border rounded-full overflow-hidden mb-2">
                     <div
-                      className="h-full bg-teal-dark rounded-full"
-                      style={{ width: `${enrolled ? Math.round((present / enrolled) * 100) : 0}%` }}
+                      className="h-full rounded-full"
+                      style={{
+                        width: `${enrolled ? Math.round((present / enrolled) * 100) : 0}%`,
+                        backgroundColor: room.color ?? "#1f9c86",
+                      }}
                     />
                   </div>
                   {absent.length > 0 && (

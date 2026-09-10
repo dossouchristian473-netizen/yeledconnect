@@ -2,8 +2,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getChildPhotoUrl } from "@/lib/supabase/childPhoto";
+import { unwrapOne } from "@/lib/supabase/one";
 import { SubpageHeader } from "@/components/SubpageHeader";
 import { ChildAvatar } from "@/components/ChildAvatar";
+import { RoomIcon } from "@/components/RoomIcon";
+
+type Room = { name: string; color: string | null; icon: string | null };
 
 export default async function EnfantDetailPage({ params }: { params: { id: string } }) {
   const supabase = createClient();
@@ -11,13 +15,14 @@ export default async function EnfantDetailPage({ params }: { params: { id: strin
   const { data: child } = await supabase
     .from("children")
     .select(
-      "id, first_name, last_name, date_of_birth, allergies, special_needs, current_room_id, photo_url, prayer_subject, home_address, second_parent_name, second_parent_phone, second_parent_email, emergency_contact_name, emergency_contact_phone, emergency_contact_relationship, custody_notes"
+      "id, first_name, last_name, date_of_birth, allergies, special_needs, current_room_id, photo_url, prayer_subject, home_address, second_parent_name, second_parent_phone, second_parent_email, emergency_contact_name, emergency_contact_phone, emergency_contact_relationship, custody_notes, room:current_room_id(name, color, icon)"
     )
     .eq("id", params.id)
     .maybeSingle();
 
   if (!child) notFound();
 
+  const room = unwrapOne<Room>(child.room);
   const photoUrl = await getChildPhotoUrl(supabase, child.photo_url);
 
   const { data: exercises } = child.current_room_id
@@ -45,12 +50,21 @@ export default async function EnfantDetailPage({ params }: { params: { id: strin
         <div className="bg-card rounded-lg2 shadow-card p-[22px]">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3.5 min-w-0">
-              <ChildAvatar photoUrl={photoUrl} firstName={child.first_name} size={48} />
+              <ChildAvatar photoUrl={photoUrl} firstName={child.first_name} size={48} color={room?.color} />
               <div className="min-w-0">
                 <div className="font-bold text-[16px] truncate">
                   {child.first_name} {child.last_name ?? ""}
                 </div>
                 <div className="text-faint text-[12.5px] mt-0.5">Né(e) le {child.date_of_birth ?? "—"}</div>
+                {room && (
+                  <span
+                    className="inline-flex items-center gap-1 mt-1.5 rounded-full px-2.5 py-[3px] text-[11px] font-bold"
+                    style={{ backgroundColor: room.color ?? "#e7edf5" }}
+                  >
+                    <RoomIcon icon={room.icon} className="w-3 h-3" />
+                    {room.name}
+                  </span>
+                )}
               </div>
             </div>
             <Link

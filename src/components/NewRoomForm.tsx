@@ -3,12 +3,12 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { ROOM_CLASSES, formatAgeRange } from "@/lib/rooms";
+import { RoomIcon } from "@/components/RoomIcon";
 
 export function NewRoomForm({ redirectHref }: { redirectHref: string }) {
-  const [name, setName] = useState("");
-  const [ageMin, setAgeMin] = useState("");
-  const [ageMax, setAgeMax] = useState("");
-  const [capacity, setCapacity] = useState("");
+  const [selected, setSelected] = useState<(typeof ROOM_CLASSES)[number] | null>(null);
+  const [capacity, setCapacity] = useState("20");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -16,14 +16,16 @@ export function NewRoomForm({ redirectHref }: { redirectHref: string }) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (!selected) return;
     setSaving(true);
     setError(null);
 
     const { error } = await supabase.from("rooms").insert({
-      name: name.trim(),
-      age_min: ageMin ? Number(ageMin) : null,
-      age_max: ageMax ? Number(ageMax) : null,
+      name: selected.name,
+      age_min: selected.ageMin,
+      age_max: selected.ageMax,
+      color: selected.color,
+      icon: selected.icon,
       capacity: capacity ? Number(capacity) : null,
     });
 
@@ -40,18 +42,37 @@ export function NewRoomForm({ redirectHref }: { redirectHref: string }) {
   return (
     <form onSubmit={handleSubmit} className="px-6">
       <div className="bg-card rounded-lg2 shadow-card p-6 flex flex-col gap-4">
-        <Field label="Nom de la salle" value={name} onChange={setName} placeholder="Étoiles Filantes" />
-        <div className="flex gap-3">
-          <Field label="Âge min" value={ageMin} onChange={setAgeMin} placeholder="3" type="number" />
-          <Field label="Âge max" value={ageMax} onChange={setAgeMax} placeholder="5" type="number" />
+        <div>
+          <label className="block text-[11.5px] font-bold tracking-wide text-faint uppercase mb-2">Classe</label>
+          <div className="grid grid-cols-2 gap-2.5">
+            {ROOM_CLASSES.map((c) => {
+              const active = selected?.name === c.name;
+              return (
+                <button
+                  key={c.name}
+                  type="button"
+                  onClick={() => setSelected(c)}
+                  className={`rounded-md2 p-3.5 text-left border-2 ${
+                    active ? "border-blue-dark" : "border-transparent"
+                  }`}
+                  style={{ backgroundColor: c.color }}
+                >
+                  <RoomIcon icon={c.icon} className="w-5 h-5 mb-1.5" />
+                  <div className="font-bold text-[14.5px]">{c.name}</div>
+                  <div className="text-[12px] text-ink/70">{formatAgeRange(c.ageMin, c.ageMax)}</div>
+                </button>
+              );
+            })}
+          </div>
         </div>
-        <Field label="Capacité" value={capacity} onChange={setCapacity} placeholder="15" type="number" />
+
+        <Field label="Capacité" value={capacity} onChange={setCapacity} placeholder="20" type="number" />
 
         {error && <p className="text-danger text-[13px] font-medium">{error}</p>}
 
         <button
           type="submit"
-          disabled={saving || !name.trim()}
+          disabled={saving || !selected}
           className="rounded-full py-3.5 font-bold text-[14.5px] text-white bg-gradient-to-br from-[#57b3ef] to-blue-dark shadow-[0_10px_18px_-8px_rgba(44,134,204,0.5)] disabled:opacity-60"
         >
           {saving ? "Création..." : "Créer la salle"}

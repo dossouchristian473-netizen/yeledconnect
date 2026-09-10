@@ -1,5 +1,8 @@
 import Link from "next/link";
 import { createClient, getUser } from "@/lib/supabase/server";
+import { getRoomColorMap } from "@/lib/supabase/roomColors";
+import { getChildPhotoUrls } from "@/lib/supabase/childPhoto";
+import { ChildAvatar } from "@/components/ChildAvatar";
 import { Logo } from "@/components/Logo";
 import { LogoutButton } from "@/components/LogoutButton";
 
@@ -13,8 +16,24 @@ export default async function AccueilPage() {
   ]);
 
   const { data: children } = family
-    ? await supabase.from("children").select("id, first_name, date_of_birth").eq("family_id", family.id)
-    : { data: [] as { id: string; first_name: string; date_of_birth: string | null }[] };
+    ? await supabase
+        .from("children")
+        .select("id, first_name, date_of_birth, current_room_id, photo_url")
+        .eq("family_id", family.id)
+    : {
+        data: [] as {
+          id: string;
+          first_name: string;
+          date_of_birth: string | null;
+          current_room_id: string | null;
+          photo_url: string | null;
+        }[],
+      };
+
+  const [roomColors, photoUrls] = await Promise.all([
+    getRoomColorMap(supabase),
+    getChildPhotoUrls(supabase, children ?? []),
+  ]);
 
   return (
     <div>
@@ -60,9 +79,12 @@ export default async function AccueilPage() {
           </p>
           {children?.map((c) => (
             <div key={c.id} className="flex items-center gap-3 mt-4 pt-4 border-t border-border first:border-0 first:pt-0">
-              <div className="w-[38px] h-[38px] rounded-full bg-gradient-to-br from-[#8ec9f5] to-[#5fa8e6] text-white flex items-center justify-center font-bold text-[14px]">
-                {c.first_name[0]?.toUpperCase()}
-              </div>
+              <ChildAvatar
+                photoUrl={photoUrls[c.id]}
+                firstName={c.first_name}
+                size={38}
+                color={c.current_room_id ? roomColors[c.current_room_id] : null}
+              />
               <div>
                 <div className="font-semibold text-[14.5px]">{c.first_name}</div>
                 <div className="text-faint text-[12.5px]">Né(e) le {c.date_of_birth ?? "—"}</div>

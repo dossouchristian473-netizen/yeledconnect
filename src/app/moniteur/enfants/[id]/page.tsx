@@ -1,8 +1,10 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { unwrapOne } from "@/lib/supabase/one";
+import { getChildPhotoUrl } from "@/lib/supabase/childPhoto";
 import { SubpageHeader } from "@/components/SubpageHeader";
 import { AttendanceButton } from "@/components/AttendanceButton";
+import { ChildAvatar } from "@/components/ChildAvatar";
 import { NoteForm } from "@/components/NoteForm";
 
 export default async function MoniteurChildPage({ params }: { params: { id: string } }) {
@@ -10,11 +12,16 @@ export default async function MoniteurChildPage({ params }: { params: { id: stri
 
   const { data: child } = await supabase
     .from("children")
-    .select("id, first_name, last_name, date_of_birth, allergies, special_needs, current_room_id")
+    .select(
+      "id, first_name, last_name, date_of_birth, allergies, special_needs, current_room_id, photo_url, room:current_room_id(color)"
+    )
     .eq("id", params.id)
     .maybeSingle();
 
   if (!child) notFound();
+
+  const roomColor = unwrapOne<{ color: string | null }>(child.room)?.color ?? null;
+  const photoUrl = await getChildPhotoUrl(supabase, child.photo_url);
 
   const today = new Date().toISOString().slice(0, 10);
   // RLS restreint déjà les notes et résultats à ceux visibles par le moniteur connecté.
@@ -44,9 +51,7 @@ export default async function MoniteurChildPage({ params }: { params: { id: stri
         <div className="bg-card rounded-lg2 shadow-card p-[22px]">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3.5 min-w-0">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#8ec9f5] to-[#5fa8e6] text-white flex items-center justify-center font-bold text-[16px] flex-shrink-0">
-                {child.first_name[0]?.toUpperCase()}
-              </div>
+              <ChildAvatar photoUrl={photoUrl} firstName={child.first_name} size={48} color={roomColor} />
               <div className="min-w-0">
                 <div className="font-bold text-[16px] truncate">
                   {child.first_name} {child.last_name ?? ""}

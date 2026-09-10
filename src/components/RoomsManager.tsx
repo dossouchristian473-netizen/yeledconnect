@@ -1,14 +1,16 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { formatAgeRange } from "@/lib/rooms";
 import { DeleteRowButton } from "@/components/DeleteRowButton";
+import { RoomIcon } from "@/components/RoomIcon";
 
 export async function RoomsManager({ newHref }: { newHref: string }) {
   const supabase = createClient();
 
   const { data: rooms } = await supabase
     .from("rooms")
-    .select("id, name, age_min, age_max, capacity")
-    .order("name");
+    .select("id, name, age_min, age_max, capacity, color, icon")
+    .order("age_min");
 
   const roomIds = (rooms ?? []).map((r) => r.id);
   const { data: children } = roomIds.length
@@ -25,13 +27,20 @@ export async function RoomsManager({ newHref }: { newHref: string }) {
         const enrolled = children?.filter((c) => c.current_room_id === room.id).length ?? 0;
         return (
           <div key={room.id} className="bg-card rounded-lg2 shadow-card p-[18px] flex items-center justify-between gap-3">
-            <div>
-              <h3 className="text-[16px] font-semibold mb-1">{room.name}</h3>
-              <p className="text-soft text-[13.5px]">
-                {room.age_min != null && room.age_max != null ? `${room.age_min}-${room.age_max} ans · ` : ""}
-                {enrolled} inscrit{enrolled > 1 ? "s" : ""}
-                {room.capacity != null ? ` · capacité ${room.capacity}` : ""}
-              </p>
+            <div className="flex items-center gap-3.5 min-w-0">
+              <span
+                className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0"
+                style={{ backgroundColor: room.color ?? "#e7edf5" }}
+              >
+                <RoomIcon icon={room.icon} className="w-5 h-5" />
+              </span>
+              <div className="min-w-0">
+                <h3 className="text-[16px] font-semibold mb-1 truncate">{room.name}</h3>
+                <p className="text-soft text-[13.5px]">
+                  {formatAgeRange(room.age_min, room.age_max)} · {enrolled} inscrit{enrolled > 1 ? "s" : ""}
+                  {room.capacity != null ? ` · capacité ${room.capacity}` : ""}
+                </p>
+              </div>
             </div>
             <DeleteRowButton table="rooms" id={room.id} />
           </div>

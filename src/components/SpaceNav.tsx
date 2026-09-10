@@ -33,7 +33,7 @@ export function SpaceNav({ items, userId }: { items: SpaceNavItem[]; userId?: st
   return (
     <>
       <header className="fixed top-0 inset-x-0 z-40 h-[68px] bg-white border-b border-border flex items-center">
-        <div className="max-w-[960px] w-full mx-auto px-6 nav:px-8 flex items-center justify-between">
+        <div className="max-w-[1180px] w-full mx-auto px-6 nav:px-8 flex items-center justify-between">
           <Logo />
 
           <nav className="hidden nav:flex items-center gap-4 lg:gap-7">

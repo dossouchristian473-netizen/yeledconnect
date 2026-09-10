@@ -18,7 +18,7 @@ export default async function AccueilStaffLayout({ children }: { children: React
   }
 
   return (
-    <div className="max-w-[560px] mx-auto min-h-screen pt-[84px] pb-10">
+    <div className="max-w-[1180px] mx-auto min-h-screen pt-[84px] pb-10">
       {children}
       <AccueilNav />
     </div>

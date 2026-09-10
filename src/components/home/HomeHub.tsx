@@ -20,23 +20,19 @@ export async function HomeHub() {
   const canEdit = roles?.some((r) => r.role === "responsable" || r.role === "administrateur") ?? false;
 
   return (
-    // Le hub casse volontairement la contrainte max-w-[560px] du layout
-    // parent (commune à tout le reste de l'espace) pour occuper la largeur
-    // de l'écran sur desktop : technique "full-bleed" classique (left/right
-    // 50% + marges négatives égales), puis un conteneur interne qui
-    // recentre le contenu avec son propre plafond, plus large.
-    <div className="relative left-1/2 right-1/2 w-screen -mx-[50vw]">
-      <div className="max-w-[1180px] mx-auto flex flex-col gap-7 pb-4">
-        <HeroBanner />
-        <ClassesSection />
-        <div className="px-6 grid grid-cols-1 min-[480px]:grid-cols-2 gap-6">
-          <EventsSection canEdit={canEdit} />
-          <PhotosSection canEdit={canEdit} />
-        </div>
-        <div className="px-6 grid grid-cols-1 min-[480px]:grid-cols-2 gap-6">
-          <NewsSection canEdit={canEdit} />
-          <ResourcesSection canEdit={canEdit} />
-        </div>
+    // Le layout de l'espace (parent/moniteur/accueil/responsable/admin/ado)
+    // est maintenant lui-même large (max-w-[1180px]) : plus besoin ici de
+    // casser sa largeur, ce conteneur en hérite directement.
+    <div className="flex flex-col gap-7 pb-4">
+      <HeroBanner />
+      <ClassesSection />
+      <div className="px-6 grid grid-cols-1 min-[480px]:grid-cols-2 gap-6">
+        <EventsSection canEdit={canEdit} />
+        <PhotosSection canEdit={canEdit} />
+      </div>
+      <div className="px-6 grid grid-cols-1 min-[480px]:grid-cols-2 gap-6">
+        <NewsSection canEdit={canEdit} />
+        <ResourcesSection canEdit={canEdit} />
       </div>
     </div>
   );

@@ -28,9 +28,15 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const isAuthRoute = request.nextUrl.pathname.startsWith("/auth");
+  // Pages légales publiques (liées depuis l'écran de consentement Google
+  // OAuth) : doivent rester consultables sans être connecté.
+  const isPublicRoute =
+    isAuthRoute ||
+    request.nextUrl.pathname.startsWith("/confidentialite") ||
+    request.nextUrl.pathname.startsWith("/conditions");
 
   // Utilisateur non connecté qui essaie d'accéder à l'espace protégé → /auth
-  if (!user && !isAuthRoute) {
+  if (!user && !isPublicRoute) {
     const url = request.nextUrl.clone();
     url.pathname = "/auth";
     return NextResponse.redirect(url);

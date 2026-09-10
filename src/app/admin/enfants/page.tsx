@@ -91,6 +91,13 @@ export default async function AdminEnfantsPage({
             </Link>
           );
         })}
+
+        <Link
+          href="/admin/enfants/nouveau"
+          className="flex items-center justify-center gap-2 border-[1.5px] border-dashed border-[#c7d3e0] rounded-md2 py-4 text-blue-dark font-semibold text-[14.5px]"
+        >
+          + Ajouter un enfant
+        </Link>
       </div>
     </div>
   );

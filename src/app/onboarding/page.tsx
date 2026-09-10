@@ -67,16 +67,29 @@ export default function OnboardingPage() {
     }
 
     if (validChildren.length > 0) {
+      // La photo est obligatoire en base (photo_url not null) : on génère
+      // l'id et le chemin de stockage avant l'insertion pour pouvoir fournir
+      // photo_url dès la création, plutôt que d'insérer puis mettre à jour
+      // après coup (ce qui laisserait une fenêtre où la ligne existe sans
+      // photo, incompatible avec une contrainte not null).
+      const drafts = validChildren.map((c) => {
+        const id = crypto.randomUUID();
+        const ext = c.photoFile!.name.split(".").pop() || "jpg";
+        return { id, child: c, path: `${id}/photo.${ext}` };
+      });
+
       const { data: inserted, error: childrenErr } = await supabase
         .from("children")
         .insert(
-          validChildren.map((c) => ({
+          drafts.map((d) => ({
+            id: d.id,
             family_id: family.id,
-            first_name: c.first_name,
-            date_of_birth: c.date_of_birth || null,
+            first_name: d.child.first_name,
+            date_of_birth: d.child.date_of_birth || null,
+            photo_url: d.path,
           }))
         )
-        .select("id, first_name");
+        .select("id");
 
       if (childrenErr || !inserted) {
         setError("Impossible d'ajouter les enfants. Réessayez.");
@@ -84,22 +97,24 @@ export default function OnboardingPage() {
         return;
       }
 
-      // On associe chaque enfant inséré au fichier photo correspondant par
-      // position (même ordre d'insertion que validChildren) puis on upload.
-      await Promise.all(
-        inserted.map(async (row, i) => {
-          const file = validChildren[i].photoFile;
-          if (!file) return;
-          const ext = file.name.split(".").pop() || "jpg";
-          const path = `${row.id}/photo.${ext}`;
+      // Un échec d'envoi de la photo annule la création de cet enfant
+      // plutôt que de laisser une fiche avec une photo manquante.
+      const results = await Promise.all(
+        drafts.map(async (d) => {
           const { error: uploadErr } = await supabase.storage
             .from("child-photos")
-            .upload(path, file, { upsert: true });
-          if (!uploadErr) {
-            await supabase.from("children").update({ photo_url: path }).eq("id", row.id);
-          }
+            .upload(d.path, d.child.photoFile!, { upsert: true });
+          return { id: d.id, ok: !uploadErr };
         })
       );
+
+      const failedIds = results.filter((r) => !r.ok).map((r) => r.id);
+      if (failedIds.length > 0) {
+        await supabase.from("children").delete().in("id", failedIds);
+        setError("La photo d'un ou plusieurs enfants n'a pas pu être envoyée. Réessayez.");
+        setSaving(false);
+        return;
+      }
     }
 
     router.push("/accueil");

@@ -79,11 +79,11 @@ export function ClassesGrid({ classes, canEdit }: { classes: ClassInfo[]; canEdi
 
       {open && (
         <div
-          className="fixed inset-0 z-[70] bg-black/40 flex items-end sm:items-center justify-center"
+          className="fixed inset-0 z-[70] bg-black/40 flex items-center justify-center px-6"
           onClick={closeModal}
         >
           <div
-            className="bg-white rounded-t-[26px] sm:rounded-lg2 w-full sm:max-w-[420px] p-6 pb-8"
+            className="bg-white rounded-lg2 w-full max-w-[420px] max-h-[85vh] overflow-y-auto p-6 pb-7"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-3 mb-3">

@@ -6,7 +6,7 @@ export async function ClassesSection({ canEdit }: { canEdit: boolean }) {
   const supabase = createClient();
 
   const [{ data: rooms }, { data: assignments }] = await Promise.all([
-    supabase.from("rooms").select("id, name, age_min, age_max, color, icon, description").order("age_min"),
+    supabase.from("rooms").select("id, name, age_min, age_max, color, icon, description, program").order("age_min"),
     supabase.from("moniteur_rooms").select("room_id, moniteur_id"),
   ]);
 
@@ -34,6 +34,7 @@ export async function ClassesSection({ canEdit }: { canEdit: boolean }) {
     color: r.color,
     icon: r.icon,
     description: r.description,
+    program: r.program,
     ageRange: formatAgeRange(r.age_min, r.age_max),
     moniteurs: moniteursByRoom.get(r.id) ?? [],
   }));

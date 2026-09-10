@@ -11,6 +11,7 @@ type ClassInfo = {
   color: string | null;
   icon: string | null;
   description: string | null;
+  program: string | null;
   ageRange: string;
   moniteurs: string[];
 };
@@ -18,7 +19,8 @@ type ClassInfo = {
 export function ClassesGrid({ classes, canEdit }: { classes: ClassInfo[]; canEdit: boolean }) {
   const [openId, setOpenId] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState("");
+  const [descriptionDraft, setDescriptionDraft] = useState("");
+  const [programDraft, setProgramDraft] = useState("");
   const [saving, setSaving] = useState(false);
   const router = useRouter();
   const supabase = createClient();
@@ -35,16 +37,20 @@ export function ClassesGrid({ classes, canEdit }: { classes: ClassInfo[]; canEdi
   }
 
   function startEditing() {
-    setDraft(open?.description ?? "");
+    setDescriptionDraft(open?.description ?? "");
+    setProgramDraft(open?.program ?? "");
     setEditing(true);
   }
 
-  async function saveDescription() {
+  async function saveChanges() {
     if (!open) return;
     setSaving(true);
     const { error } = await supabase
       .from("rooms")
-      .update({ description: draft.trim() || null })
+      .update({
+        description: descriptionDraft.trim() || null,
+        program: programDraft.trim() || null,
+      })
       .eq("id", open.id);
     setSaving(false);
     if (!error) {
@@ -100,18 +106,35 @@ export function ClassesGrid({ classes, canEdit }: { classes: ClassInfo[]; canEdi
             </div>
 
             {editing ? (
-              <div className="mb-4">
-                <textarea
-                  value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
-                  rows={4}
-                  placeholder="Décrivez cette classe..."
-                  className="w-full border border-border rounded-md2 px-4 py-3 text-[14px] resize-none"
-                />
-                <div className="flex gap-2 mt-2.5">
+              <div className="mb-4 flex flex-col gap-3.5">
+                <div>
+                  <label className="block text-[11px] font-bold tracking-wide text-faint uppercase mb-1.5">
+                    Description
+                  </label>
+                  <textarea
+                    value={descriptionDraft}
+                    onChange={(e) => setDescriptionDraft(e.target.value)}
+                    rows={3}
+                    placeholder="Décrivez cette classe..."
+                    className="w-full border border-border rounded-md2 px-4 py-3 text-[14px] resize-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold tracking-wide text-faint uppercase mb-1.5">
+                    Programme de l&apos;année
+                  </label>
+                  <textarea
+                    value={programDraft}
+                    onChange={(e) => setProgramDraft(e.target.value)}
+                    rows={6}
+                    placeholder={"Septembre : ...\nOctobre : ...\n..."}
+                    className="w-full border border-border rounded-md2 px-4 py-3 text-[14px] resize-none"
+                  />
+                </div>
+                <div className="flex gap-2">
                   <button
                     type="button"
-                    onClick={saveDescription}
+                    onClick={saveChanges}
                     disabled={saving}
                     className="flex-1 rounded-full bg-blue-dark text-white font-bold text-[13px] py-2.5 disabled:opacity-60"
                   >
@@ -127,19 +150,29 @@ export function ClassesGrid({ classes, canEdit }: { classes: ClassInfo[]; canEdi
                 </div>
               </div>
             ) : (
-              <div className="mb-4">
-                <p className="text-[14px] text-ink leading-relaxed">
-                  {open.description || "Aucune description pour le moment."}
-                </p>
-                {canEdit && (
-                  <button
-                    type="button"
-                    onClick={startEditing}
-                    className="text-blue-dark font-bold text-[12px] uppercase tracking-wide mt-2"
-                  >
-                    Modifier
-                  </button>
-                )}
+              <div className="mb-4 flex flex-col gap-4">
+                <div>
+                  <p className="text-[14px] text-ink leading-relaxed">
+                    {open.description || "Aucune description pour le moment."}
+                  </p>
+                  {canEdit && (
+                    <button
+                      type="button"
+                      onClick={startEditing}
+                      className="text-blue-dark font-bold text-[12px] uppercase tracking-wide mt-2"
+                    >
+                      Modifier
+                    </button>
+                  )}
+                </div>
+                <div>
+                  <div className="text-[11px] font-bold tracking-wide text-faint uppercase mb-1.5">
+                    Programme de l&apos;année
+                  </div>
+                  <p className="text-[14px] text-ink leading-relaxed whitespace-pre-line">
+                    {open.program || "Aucun programme renseigné pour le moment."}
+                  </p>
+                </div>
               </div>
             )}
 

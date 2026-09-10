@@ -1113,9 +1113,13 @@ alter table public.children alter column photo_url set not null;
 -- ============================================================
 
 -- Descriptif affiché dans le detail "Voir Descriptif" d'une classe.
--- Pas d'UI d'édition dédiée pour l'instant (hors de la liste des droits
--- demandés) : à renseigner plus tard via une future page, ou en SQL direct.
+-- Éditable par Responsable/Administrateur depuis la modale "Voir
+-- descriptif" du hub d'accueil (même RLS que le reste de rooms : policy
+-- "Responsable/Administrateur gèrent les salles" déjà en place plus haut).
 alter table public.rooms add column if not exists description text;
+-- Programme des thèmes/activités prévus pour cette classe sur l'année,
+-- éditable au même endroit que la description.
+alter table public.rooms add column if not exists program text;
 
 create table public.news_posts (
   id uuid primary key default gen_random_uuid(),

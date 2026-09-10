@@ -1100,3 +1100,118 @@ create policy "Responsable/Administrateur gèrent toutes les annonces"
 -- règle et n'avaient pas de photo.
 alter table public.children alter column photo_url set not null;
 
+-- ============================================================
+-- Hub d'accueil partagé (écran "Accueil" de chaque espace — à ne pas
+-- confondre avec l'espace "Accueil" qui est le rôle réception/check-in).
+-- Page identique pour les 5 rôles Parent/Moniteur/Accueil/Responsable/
+-- Administrateur : hero, classes, événements à venir (table `events`
+-- déjà existante, réutilisée telle quelle), photos, nouvelles, ressources
+-- spirituelles. Édition réservée à Responsable/Administrateur, en lecture
+-- seule pour tous les autres — appliqué en RLS, pas seulement dans l'UI.
+-- ============================================================
+
+-- Descriptif affiché dans le detail "Voir Descriptif" d'une classe.
+-- Pas d'UI d'édition dédiée pour l'instant (hors de la liste des droits
+-- demandés) : à renseigner plus tard via une future page, ou en SQL direct.
+alter table public.rooms add column if not exists description text;
+
+create table public.news_posts (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  content text not null,
+  image_path text,
+  created_by uuid references public.profiles(id),
+  created_at timestamptz not null default now(),
+  is_published boolean not null default true
+);
+
+create table public.home_photos (
+  id uuid primary key default gen_random_uuid(),
+  photo_path text not null,
+  caption text,
+  photo_date date,
+  created_by uuid references public.profiles(id),
+  created_at timestamptz not null default now(),
+  is_published boolean not null default true
+);
+
+create table public.spiritual_resources (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  description text,
+  url text not null,
+  resource_type text not null default 'lien' check (resource_type in ('lien', 'video')),
+  created_by uuid references public.profiles(id),
+  created_at timestamptz not null default now(),
+  is_published boolean not null default true
+);
+
+alter table public.news_posts enable row level security;
+alter table public.home_photos enable row level security;
+alter table public.spiritual_resources enable row level security;
+
+-- Chaque table : lecture des éléments publiés pour tout utilisateur
+-- authentifié, lecture totale + écriture réservées à Responsable/
+-- Administrateur (is_published sert de désactivation "douce" — jamais de
+-- suppression physique nécessaire pour dépublier un contenu).
+create policy "Lecture des nouvelles publiées ou par le staff"
+  on public.news_posts for select using (
+    is_published or public.has_role('responsable') or public.has_role('administrateur')
+  );
+create policy "Responsable/Administrateur gèrent les nouvelles"
+  on public.news_posts for all using (
+    public.has_role('responsable') or public.has_role('administrateur')
+  ) with check (
+    public.has_role('responsable') or public.has_role('administrateur')
+  );
+
+create policy "Lecture des photos publiées ou par le staff"
+  on public.home_photos for select using (
+    is_published or public.has_role('responsable') or public.has_role('administrateur')
+  );
+create policy "Responsable/Administrateur gèrent les photos d'accueil"
+  on public.home_photos for all using (
+    public.has_role('responsable') or public.has_role('administrateur')
+  ) with check (
+    public.has_role('responsable') or public.has_role('administrateur')
+  );
+
+create policy "Lecture des ressources publiées ou par le staff"
+  on public.spiritual_resources for select using (
+    is_published or public.has_role('responsable') or public.has_role('administrateur')
+  );
+create policy "Responsable/Administrateur gèrent les ressources spirituelles"
+  on public.spiritual_resources for all using (
+    public.has_role('responsable') or public.has_role('administrateur')
+  ) with check (
+    public.has_role('responsable') or public.has_role('administrateur')
+  );
+
+-- Bucket public (contenu non sensible, destiné à être vu par tous les
+-- comptes connectés) : pas besoin d'URL signée comme pour child-photos.
+insert into storage.buckets (id, name, public)
+values ('home-photos', 'home-photos', true)
+on conflict (id) do nothing;
+
+create policy "Responsable/Administrateur gèrent les fichiers du hub d'accueil"
+  on storage.objects for all using (
+    bucket_id = 'home-photos' and (public.has_role('responsable') or public.has_role('administrateur'))
+  ) with check (
+    bucket_id = 'home-photos' and (public.has_role('responsable') or public.has_role('administrateur'))
+  );
+
+-- Le detail "Voir Descriptif" d'une classe liste ses moniteurs pour
+-- n'importe quel rôle (pas seulement les parents concernés) : il faut donc
+-- élargir la lecture de moniteur_rooms (jusque-là restreinte par rôle), et
+-- résoudre le nom du moniteur sans exposer le reste de son profil (même
+-- principe que contact_profiles/exercise_questions_public plus haut : une
+-- vue sans security_invoker, pas de nouvelle policy select sur profiles,
+-- pour ne jamais risquer de fuiter la colonne "phone").
+create policy "Tout utilisateur authentifié lit les affectations moniteur"
+  on public.moniteur_rooms for select using (auth.uid() is not null);
+
+create view public.moniteur_directory as
+  select p.id, p.username
+  from public.profiles p
+  join public.user_roles ur on ur.user_id = p.id and ur.role = 'moniteur';
+

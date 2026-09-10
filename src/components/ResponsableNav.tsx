@@ -3,6 +3,7 @@
 import { SpaceNav, type SpaceNavItem } from "@/components/SpaceNav";
 
 const items: SpaceNavItem[] = [
+  { href: "/responsable/accueil", label: "Accueil", icon: HomeIcon },
   { href: "/responsable/apercu", label: "Aperçu", icon: ChartIcon },
   { href: "/responsable/presences", label: "Présences", icon: CheckIcon },
   { href: "/responsable/salles", label: "Salles", icon: RoomIcon },
@@ -15,6 +16,15 @@ export function ResponsableNav() {
   return <SpaceNav items={items} />;
 }
 
+function HomeIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
+      <path d="M4 11.5 12 4l8 7.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M6 10v9a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-9" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+      <path d="M10 20v-5h4v5" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+    </svg>
+  );
+}
 function ChartIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className}>

@@ -8,7 +8,7 @@ export function DeleteRowButton({
   table,
   id,
 }: {
-  table: "events" | "exercises" | "class_announcements";
+  table: "events" | "exercises" | "class_announcements" | "news_posts" | "home_photos" | "spiritual_resources";
   id: string;
 }) {
   const [loading, setLoading] = useState(false);

@@ -1,5 +1,5 @@
 import { HomeHub } from "@/components/home/HomeHub";
 
-export default function AccueilPage() {
+export default function AccueilStaffAccueilPage() {
   return <HomeHub />;
 }

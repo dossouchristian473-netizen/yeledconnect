@@ -522,10 +522,9 @@ alter table public.children
   add column if not exists emergency_contact_relationship text,
   add column if not exists custody_notes text;
 
--- photo_url est "obligatoire à l'inscription" côté produit (voir formulaire
--- d'onboarding), mais reste nullable en base : une contrainte NOT NULL
--- casserait les enfants déjà existants et empêcherait l'administrateur de
--- corriger une fiche incomplète en plusieurs étapes.
+-- photo_url est passée en NOT NULL plus bas dans ce fichier, une fois les
+-- flux de création (onboarding + admin) réécrits pour la fournir dès
+-- l'insertion — voir la section "Photo obligatoire" en fin de fichier.
 
 -- ---------- Stockage des photos d'enfants ----------
 -- Bucket privé : les photos d'enfants ne sont jamais publiques. L'affichage
@@ -1089,4 +1088,15 @@ create policy "Responsable/Administrateur gèrent toutes les annonces"
   ) with check (
     public.has_role('responsable') or public.has_role('administrateur')
   );
+
+-- ============================================================
+-- Photo obligatoire (suite de la section 10.4 plus haut)
+-- ============================================================
+-- onboarding/page.tsx et AdminNewChildForm.tsx génèrent désormais l'id de
+-- l'enfant côté client et fournissent photo_url dès l'INSERT (avec
+-- suppression de la ligne si l'upload échoue), donc plus aucune fenêtre où
+-- une fiche existe sans photo. Appliqué le 2026-09-10 après correction des
+-- 3 fiches historiques (Léo, Noa, Mia) qui avaient été créées avant cette
+-- règle et n'avaient pas de photo.
+alter table public.children alter column photo_url set not null;
 

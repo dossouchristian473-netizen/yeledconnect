@@ -15,6 +15,7 @@ export default async function RootPage() {
   if (roleNames.includes("accueil")) redirect("/accueil-staff/recherche");
   if (roleNames.includes("responsable")) redirect("/responsable/apercu");
   if (roleNames.includes("administrateur")) redirect("/admin/comptes");
+  if (roleNames.includes("ado")) redirect("/ado/exercices");
 
   // Compte authentifié mais sans rôle connu : on affiche un message plutôt que
   // de rediriger vers /auth, pour éviter une boucle avec le middleware (qui

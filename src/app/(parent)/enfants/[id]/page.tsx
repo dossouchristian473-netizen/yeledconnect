@@ -3,9 +3,11 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getChildPhotoUrl } from "@/lib/supabase/childPhoto";
 import { unwrapOne } from "@/lib/supabase/one";
+import { computeAge } from "@/lib/age";
 import { SubpageHeader } from "@/components/SubpageHeader";
 import { ChildAvatar } from "@/components/ChildAvatar";
 import { RoomIcon } from "@/components/RoomIcon";
+import { CreateAdoAccountForm } from "@/components/CreateAdoAccountForm";
 
 type Room = { name: string; color: string | null; icon: string | null };
 
@@ -15,7 +17,7 @@ export default async function EnfantDetailPage({ params }: { params: { id: strin
   const { data: child } = await supabase
     .from("children")
     .select(
-      "id, first_name, last_name, date_of_birth, allergies, special_needs, current_room_id, photo_url, prayer_subject, home_address, second_parent_name, second_parent_phone, second_parent_email, emergency_contact_name, emergency_contact_phone, emergency_contact_relationship, custody_notes, room:current_room_id(name, color, icon)"
+      "id, first_name, last_name, date_of_birth, allergies, special_needs, current_room_id, photo_url, prayer_subject, home_address, second_parent_name, second_parent_phone, second_parent_email, emergency_contact_name, emergency_contact_phone, emergency_contact_relationship, custody_notes, ado_user_id, room:current_room_id(name, color, icon)"
     )
     .eq("id", params.id)
     .maybeSingle();
@@ -24,6 +26,11 @@ export default async function EnfantDetailPage({ params }: { params: { id: strin
 
   const room = unwrapOne<Room>(child.room);
   const photoUrl = await getChildPhotoUrl(supabase, child.photo_url);
+  const age = computeAge(child.date_of_birth);
+
+  const { data: adoProfile } = child.ado_user_id
+    ? await supabase.from("profiles").select("username").eq("id", child.ado_user_id).maybeSingle()
+    : { data: null };
 
   const { data: exercises } = child.current_room_id
     ? await supabase.from("exercises").select("id, title, description").eq("room_id", child.current_room_id)
@@ -154,6 +161,10 @@ export default async function EnfantDetailPage({ params }: { params: { id: strin
               </div>
             )}
           </div>
+        )}
+
+        {age !== null && age >= 11 && (
+          <CreateAdoAccountForm childId={child.id} adoUsername={adoProfile?.username ?? null} />
         )}
 
         {exercises && exercises.length > 0 && (

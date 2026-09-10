@@ -856,3 +856,176 @@ select * from (values
 ) as v(name, age_min, age_max, capacity, color, icon)
 where not exists (select 1 from public.rooms);
 
+-- ============================================================
+-- v2 — 10.7 / 10.8 Espace Ados
+-- ============================================================
+-- Nouveau rôle, distinct de "parent". `alter type ... add value` doit
+-- s'exécuter seul (pas dans le même batch qu'une requête qui utilise déjà
+-- 'ado', à cause d'une restriction Postgres sur les nouvelles valeurs
+-- d'enum non encore validées).
+alter type public.app_role add value if not exists 'ado';
+
+-- Un compte ado est un vrai compte Supabase Auth (email technique caché,
+-- ex. lea.dupont@yeledconnect.local, pré-confirmé via l'API Admin — voir
+-- src/app/api/ado/create/route.ts, la création ne peut pas se faire par une
+-- simple fonction Postgres). Ce compte est relié à SA fiche dans `children`
+-- via cette colonne, mise à jour uniquement par cette même route (service
+-- role, contourne la RLS après avoir vérifié que l'appelant est bien
+-- administrateur ou le parent de cet enfant).
+alter table public.children add column if not exists ado_user_id uuid references auth.users(id) on delete set null;
+alter table public.children add constraint children_ado_user_id_key unique (ado_user_id);
+
+-- Le trigger d'attribution de rôle à l'inscription doit distinguer un
+-- compte ado (email technique) d'un compte parent normal : jamais les deux
+-- rôles sur le même compte, et jamais choisi côté client.
+create or replace function public.handle_new_profile()
+returns trigger
+language plpgsql
+security definer
+as $$
+declare
+  v_email text;
+begin
+  select email into v_email from auth.users where id = new.id;
+  if v_email like '%@yeledconnect.local' then
+    insert into public.user_roles (user_id, role) values (new.id, 'ado')
+    on conflict (user_id, role) do nothing;
+  else
+    insert into public.user_roles (user_id, role) values (new.id, 'parent')
+    on conflict (user_id, role) do nothing;
+  end if;
+  return new;
+end;
+$$;
+
+create policy "Un ado voit sa propre fiche"
+  on public.children for select using (ado_user_id = auth.uid());
+create policy "Un ado voit ses propres resultats"
+  on public.exercise_submissions for select using (
+    child_id in (select id from public.children where ado_user_id = auth.uid())
+  );
+
+-- Même raison que parent_visible_room_ids/moniteur_visible_family_ids plus
+-- haut (section messagerie) : éviter la récursion RLS entre children et
+-- moniteur_rooms en passant par une fonction SECURITY DEFINER.
+create or replace function public.ado_own_room_id()
+returns uuid
+language sql
+security definer
+stable
+as $$
+  select current_room_id from public.children where ado_user_id = auth.uid() limit 1;
+$$;
+
+create policy "Un ado voit le moniteur de sa salle"
+  on public.moniteur_rooms for select using (room_id = public.ado_own_room_id());
+
+-- Un ado peut désormais répondre lui-même à un exercice (avant : seul le
+-- parent pouvait soumettre au nom de l'enfant).
+create or replace function public.submit_exercise(_exercise_id uuid, _child_id uuid, _answers int[])
+returns table (score int, total int)
+language plpgsql
+security definer
+as $$
+declare
+  v_score int := 0;
+  v_total int := 0;
+  q record;
+  i int := 1;
+begin
+  if not exists (
+    select 1 from public.children c
+    join public.families f on f.id = c.family_id
+    where c.id = _child_id and f.parent_id = auth.uid()
+  ) and not exists (
+    select 1 from public.children c
+    where c.id = _child_id and c.ado_user_id = auth.uid()
+  ) then
+    raise exception 'Seul le parent ou l''ado concerné peut soumettre ces réponses.';
+  end if;
+
+  for q in
+    select correct_index from public.exercise_questions
+    where exercise_id = _exercise_id
+    order by position
+  loop
+    v_total := v_total + 1;
+    if _answers[i] = q.correct_index then
+      v_score := v_score + 1;
+    end if;
+    i := i + 1;
+  end loop;
+
+  insert into public.exercise_submissions (exercise_id, child_id, answers, score, total)
+  values (_exercise_id, _child_id, _answers, v_score, v_total)
+  on conflict (exercise_id, child_id)
+  do update set answers = excluded.answers, score = excluded.score, total = excluded.total, submitted_at = now();
+
+  return query select v_score, v_total;
+end;
+$$;
+
+-- can_message() étendu : un ado peut contacter le moniteur de sa salle, et
+-- réciproquement (même principe que parent<->moniteur plus haut).
+create or replace function public.can_message(_other_user_id uuid)
+returns boolean
+language sql
+security definer
+stable
+as $$
+  select
+    _other_user_id is distinct from auth.uid()
+    and (
+      public.has_role('administrateur') or public.user_has_role(_other_user_id, 'administrateur')
+      or (
+        public.has_role('parent') and public.user_has_role(_other_user_id, 'moniteur')
+        and exists (
+          select 1 from public.families f
+          join public.children c on c.family_id = f.id
+          join public.moniteur_rooms mr on mr.room_id = c.current_room_id
+          where f.parent_id = auth.uid() and mr.moniteur_id = _other_user_id
+        )
+      )
+      or (
+        public.has_role('moniteur') and public.user_has_role(_other_user_id, 'parent')
+        and exists (
+          select 1 from public.families f
+          join public.children c on c.family_id = f.id
+          join public.moniteur_rooms mr on mr.room_id = c.current_room_id
+          where f.parent_id = _other_user_id and mr.moniteur_id = auth.uid()
+        )
+      )
+      or (public.has_role('parent') and public.user_has_role(_other_user_id, 'responsable'))
+      or (public.has_role('responsable') and public.user_has_role(_other_user_id, 'parent'))
+      or (
+        public.has_role('ado') and public.user_has_role(_other_user_id, 'moniteur')
+        and exists (
+          select 1 from public.children c
+          join public.moniteur_rooms mr on mr.room_id = c.current_room_id
+          where c.ado_user_id = auth.uid() and mr.moniteur_id = _other_user_id
+        )
+      )
+      or (
+        public.has_role('moniteur') and public.user_has_role(_other_user_id, 'ado')
+        and exists (
+          select 1 from public.children c
+          join public.moniteur_rooms mr on mr.room_id = c.current_room_id
+          where c.ado_user_id = _other_user_id and mr.moniteur_id = auth.uid()
+        )
+      )
+    );
+$$;
+
+-- Permet à un parent de voir le profil (identifiant) du compte ado qu'il a
+-- créé pour son enfant, afin de le lui rappeler depuis la fiche enfant.
+-- Ne recrée pas de récursion : ni "children" ni "families" ne lisent
+-- "profiles" dans leurs propres policies.
+create policy "Un parent voit le profil du compte ado de son enfant"
+  on public.profiles for select using (
+    id in (
+      select c.ado_user_id from public.children c
+      join public.families f on f.id = c.family_id
+      where f.parent_id = auth.uid() and c.ado_user_id is not null
+    )
+  );
+

@@ -6,4 +6,5 @@ export const SPACES: Record<AppRole, { label: string; href: string }> = {
   accueil: { label: "Espace Accueil", href: "/accueil-staff/recherche" },
   responsable: { label: "Espace Responsable", href: "/responsable/apercu" },
   administrateur: { label: "Espace Administrateur", href: "/admin/comptes" },
+  ado: { label: "Espace Ados", href: "/ado/exercices" },
 };

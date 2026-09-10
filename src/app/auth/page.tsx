@@ -8,6 +8,7 @@ import { Logo } from "@/components/Logo";
 
 export default function AuthPage() {
   const [tab, setTab] = useState<"login" | "signup">("login");
+  const [loginMode, setLoginMode] = useState<"email" | "identifiant">("email");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -26,7 +27,11 @@ export default function AuthPage() {
     setLoading(true);
 
     if (tab === "login") {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const loginEmail =
+        loginMode === "identifiant"
+          ? `${email.trim().toLowerCase().replace(/[^a-z0-9._-]/g, "")}@yeledconnect.local`
+          : email;
+      const { error } = await supabase.auth.signInWithPassword({ email: loginEmail, password });
       if (error) {
         setError("Email ou mot de passe incorrect.");
         setLoading(false);
@@ -95,29 +100,50 @@ export default function AuthPage() {
           ))}
         </div>
 
-        <button
-          type="button"
-          onClick={handleGoogle}
-          className="w-full border border-border bg-white rounded-full py-3.5 text-[15px] font-semibold flex items-center justify-center gap-2.5"
-        >
-          <GoogleIcon /> Continuer avec Google
-        </button>
+        {tab === "login" && (
+          <div className="flex gap-2 mb-4 text-[13px] font-semibold">
+            {(["email", "identifiant"] as const).map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => setLoginMode(m)}
+                className={`flex-1 py-2 rounded-full border ${
+                  loginMode === m ? "border-blue-dark text-blue-dark bg-blue-bg" : "border-border text-faint"
+                }`}
+              >
+                {m === "email" ? "Parent / Staff" : "Ado (identifiant)"}
+              </button>
+            ))}
+          </div>
+        )}
 
-        <div className="flex items-center gap-3 my-5 text-faint text-[11.5px] font-semibold tracking-wide">
-          <div className="flex-1 h-px bg-border" /> OU PAR EMAIL <div className="flex-1 h-px bg-border" />
-        </div>
+        {!(tab === "login" && loginMode === "identifiant") && (
+          <>
+            <button
+              type="button"
+              onClick={handleGoogle}
+              className="w-full border border-border bg-white rounded-full py-3.5 text-[15px] font-semibold flex items-center justify-center gap-2.5"
+            >
+              <GoogleIcon /> Continuer avec Google
+            </button>
+
+            <div className="flex items-center gap-3 my-5 text-faint text-[11.5px] font-semibold tracking-wide">
+              <div className="flex-1 h-px bg-border" /> OU PAR EMAIL <div className="flex-1 h-px bg-border" />
+            </div>
+          </>
+        )}
 
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label className="block text-[11.5px] font-bold tracking-wide text-faint uppercase mb-2">
-              Email
+              {tab === "login" && loginMode === "identifiant" ? "Identifiant" : "Email"}
             </label>
             <input
-              type="email"
+              type={tab === "login" && loginMode === "identifiant" ? "text" : "email"}
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="vous@exemple.com"
+              placeholder={tab === "login" && loginMode === "identifiant" ? "lea.dupont" : "vous@exemple.com"}
               className="w-full border border-border rounded-full px-[18px] py-3.5 text-[15px]"
             />
           </div>
@@ -147,13 +173,18 @@ export default function AuthPage() {
           </button>
         </form>
 
-        {tab === "login" && (
+        {tab === "login" && loginMode === "email" && (
           <Link
             href="/auth/mot-de-passe-oublie"
             className="block text-center mt-[18px] text-blue text-[14.5px] font-semibold"
           >
             Mot de passe oublié ?
           </Link>
+        )}
+        {tab === "login" && loginMode === "identifiant" && (
+          <p className="text-center mt-[18px] text-faint text-[13px]">
+            Mot de passe oublié ? Demandez à un parent ou à l&apos;administrateur.
+          </p>
         )}
       </div>
 

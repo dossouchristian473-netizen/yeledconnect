@@ -1,42 +1,15 @@
-"use client";
+import { SpaceNav, type SpaceNavItem } from "@/components/SpaceNav";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { UnreadBadge } from "@/components/UnreadBadge";
-
-const items = [
+const items: SpaceNavItem[] = [
   { href: "/moniteur/salle", label: "Salle", icon: RoomIcon },
   { href: "/moniteur/enfants", label: "Enfants", icon: KidsIcon },
   { href: "/moniteur/compte-rendu", label: "Compte rendu", icon: ReportIcon },
-  { href: "/moniteur/messages", label: "Messages", icon: MessageIcon },
+  { href: "/moniteur/messages", label: "Messages", icon: MessageIcon, badge: true },
   { href: "/moniteur/profil", label: "Profil", icon: UserIcon },
 ];
 
 export function MoniteurNav({ userId }: { userId: string }) {
-  const pathname = usePathname();
-
-  return (
-    <nav className="fixed left-1/2 -translate-x-1/2 bottom-[18px] w-[calc(100%-40px)] max-w-[520px] bg-white rounded-[26px] shadow-nav flex justify-around px-1.5 pt-3 pb-2.5">
-      {items.map(({ href, label, icon: Icon }) => {
-        const active = pathname === href || pathname.startsWith(href + "/");
-        return (
-          <Link
-            key={href}
-            href={href}
-            className={`flex flex-col items-center gap-1 text-[11px] font-semibold px-1 ${
-              active ? "text-teal-dark" : "text-faint"
-            }`}
-          >
-            <span className="relative">
-              <Icon className="w-[22px] h-[22px]" />
-              {href === "/moniteur/messages" && <UnreadBadge userId={userId} />}
-            </span>
-            <span>{label.toUpperCase()}</span>
-          </Link>
-        );
-      })}
-    </nav>
-  );
+  return <SpaceNav items={items} userId={userId} />;
 }
 
 function RoomIcon({ className }: { className?: string }) {

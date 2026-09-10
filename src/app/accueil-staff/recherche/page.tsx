@@ -3,8 +3,6 @@ import { unwrapOne } from "@/lib/supabase/one";
 import { getChildPhotoUrls } from "@/lib/supabase/childPhoto";
 import { AttendanceButton } from "@/components/AttendanceButton";
 import { ChildAvatar } from "@/components/ChildAvatar";
-import { Logo } from "@/components/Logo";
-import { LogoutButton } from "@/components/LogoutButton";
 
 export default async function RecherchePage({
   searchParams,
@@ -58,11 +56,6 @@ export default async function RecherchePage({
 
   return (
     <div>
-      <div className="flex items-center justify-between px-6 pt-6 pb-2">
-        <Logo />
-        <LogoutButton />
-      </div>
-
       <div className="px-6 pt-4">
         <h1 className="text-[26px] leading-tight font-semibold">Recherche</h1>
         <p className="mt-1 text-soft text-[14.5px]">Retrouvez un enfant pour le déposer ou le récupérer.</p>

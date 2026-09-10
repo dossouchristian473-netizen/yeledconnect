@@ -4,8 +4,6 @@ import { getChildPhotoUrls } from "@/lib/supabase/childPhoto";
 import { getRoomColorMap } from "@/lib/supabase/roomColors";
 import { unwrapOne } from "@/lib/supabase/one";
 import { ChildAvatar } from "@/components/ChildAvatar";
-import { Logo } from "@/components/Logo";
-import { LogoutButton } from "@/components/LogoutButton";
 
 export default async function AdminEnfantsPage({
   searchParams,
@@ -41,11 +39,6 @@ export default async function AdminEnfantsPage({
 
   return (
     <div>
-      <div className="flex items-center justify-between px-6 pt-6 pb-2">
-        <Logo />
-        <LogoutButton />
-      </div>
-
       <div className="px-6 pt-4">
         <h1 className="text-[26px] leading-tight font-semibold">Enfants</h1>
         <p className="mt-1 text-soft text-[14.5px]">Recherchez et modifiez la fiche de n&apos;importe quel enfant.</p>

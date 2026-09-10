@@ -4,8 +4,6 @@ import { getRoomColorMap } from "@/lib/supabase/roomColors";
 import { getChildPhotoUrls } from "@/lib/supabase/childPhoto";
 import { unwrapOne } from "@/lib/supabase/one";
 import { ChildAvatar } from "@/components/ChildAvatar";
-import { Logo } from "@/components/Logo";
-import { LogoutButton } from "@/components/LogoutButton";
 
 type AnnouncementRoom = { name: string };
 
@@ -46,11 +44,6 @@ export default async function AccueilPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between px-6 pt-6 pb-2">
-        <Logo />
-        <LogoutButton />
-      </div>
-
       <div className="px-6 pt-4">
         <h1 className="text-[28px] leading-tight font-semibold">
           Bonjour {profile?.username ?? ""} 👋

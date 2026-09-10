@@ -3,8 +3,6 @@ import { createClient, getUser } from "@/lib/supabase/server";
 import { APP_ROLES } from "@/lib/roles";
 import { RoleToggle } from "@/components/RoleToggle";
 import { MoniteurRoomAssign } from "@/components/MoniteurRoomAssign";
-import { Logo } from "@/components/Logo";
-import { LogoutButton } from "@/components/LogoutButton";
 import { UnreadBadge } from "@/components/UnreadBadge";
 
 export default async function AdminComptesPage({
@@ -35,11 +33,6 @@ export default async function AdminComptesPage({
 
   return (
     <div>
-      <div className="flex items-center justify-between px-6 pt-6 pb-2">
-        <Logo />
-        <LogoutButton />
-      </div>
-
       <div className="px-6 pt-4 flex items-center justify-between gap-3">
         <div>
           <h1 className="text-[26px] leading-tight font-semibold">Comptes</h1>

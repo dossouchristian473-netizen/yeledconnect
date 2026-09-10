@@ -1,75 +1,15 @@
-"use client";
+import { SpaceNav, type SpaceNavItem } from "@/components/SpaceNav";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { UnreadBadge } from "@/components/UnreadBadge";
-import { Logo } from "@/components/Logo";
-import { LogoutButton } from "@/components/LogoutButton";
-
-const items = [
+const items: SpaceNavItem[] = [
   { href: "/accueil", label: "Accueil", icon: HomeIcon },
   { href: "/enfants", label: "Enfants", icon: KidsIcon },
   { href: "/agenda", label: "Agenda", icon: CalendarIcon },
-  { href: "/messages", label: "Messages", icon: MessageIcon },
+  { href: "/messages", label: "Messages", icon: MessageIcon, badge: true },
   { href: "/profil", label: "Profil", icon: UserIcon },
 ];
 
 export function BottomNav({ userId }: { userId: string }) {
-  const pathname = usePathname();
-
-  return (
-    <>
-      {/* Desktop (≥820px) : navbar horizontale fixe en haut. */}
-      <nav className="hidden nav:flex fixed top-0 inset-x-0 z-40 h-[76px] bg-white border-b border-border items-center">
-        <div className="max-w-[960px] w-full mx-auto px-8 flex items-center justify-between">
-          <Logo />
-          <div className="flex items-center gap-7">
-            {items.map(({ href, label, icon: Icon }) => {
-              const active = pathname === href;
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  className={`flex items-center gap-2 text-[14px] font-semibold ${
-                    active ? "text-blue-dark" : "text-faint"
-                  }`}
-                >
-                  <span className="relative">
-                    <Icon className="w-[19px] h-[19px]" />
-                    {href === "/messages" && <UnreadBadge userId={userId} />}
-                  </span>
-                  {label}
-                </Link>
-              );
-            })}
-          </div>
-          <LogoutButton />
-        </div>
-      </nav>
-
-      {/* Mobile (<820px) : barre flottante en bas, inchangée. */}
-      <nav className="nav:hidden fixed left-1/2 -translate-x-1/2 bottom-[18px] w-[calc(100%-40px)] max-w-[520px] bg-white rounded-[26px] shadow-nav flex justify-around px-1.5 pt-3 pb-2.5">
-        {items.map(({ href, label, icon: Icon }) => {
-          const active = pathname === href;
-          return (
-            <Link
-              key={href}
-              href={href}
-              className={`flex flex-col items-center gap-1 text-[11px] font-semibold px-1 ${
-                active ? "text-blue-dark" : "text-faint"
-              }`}
-            >
-              <span className="relative">
-                <Icon className="w-[22px] h-[22px]" />
-                {href === "/messages" && <UnreadBadge userId={userId} />}
-              </span>
-              <span>{label.toUpperCase()}</span>
-            </Link>
-          );
-        })}
-      </nav>
-    </>
-  );
+  return <SpaceNav items={items} userId={userId} />;
 }
 
 function HomeIcon({ className }: { className?: string }) {

@@ -1,8 +1,6 @@
 import Link from "next/link";
 import { createClient, getUser } from "@/lib/supabase/server";
 import { unwrapOne } from "@/lib/supabase/one";
-import { Logo } from "@/components/Logo";
-import { LogoutButton } from "@/components/LogoutButton";
 import { ChildAvatar } from "@/components/ChildAvatar";
 import { RoomIcon } from "@/components/RoomIcon";
 
@@ -44,11 +42,6 @@ export default async function AdoExercicesPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between px-6 pt-6 pb-2">
-        <Logo />
-        <LogoutButton />
-      </div>
-
       <div className="px-6 pt-4 flex items-center gap-3.5">
         <ChildAvatar photoUrl={null} firstName={profile?.username ?? "?"} size={48} color={room?.color} />
         <div>

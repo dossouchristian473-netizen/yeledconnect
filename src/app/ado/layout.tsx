@@ -16,7 +16,7 @@ export default async function AdoLayout({ children }: { children: React.ReactNod
   }
 
   return (
-    <div className="max-w-[560px] mx-auto min-h-screen pb-[110px]">
+    <div className="max-w-[560px] mx-auto min-h-screen pt-[84px] pb-10">
       {children}
       <AdoNav userId={user.id} />
     </div>

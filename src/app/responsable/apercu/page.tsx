@@ -1,7 +1,5 @@
 import Link from "next/link";
 import { createClient, getUser } from "@/lib/supabase/server";
-import { Logo } from "@/components/Logo";
-import { LogoutButton } from "@/components/LogoutButton";
 import { UnreadBadge } from "@/components/UnreadBadge";
 
 export default async function ResponsableApercuPage() {
@@ -50,11 +48,6 @@ export default async function ResponsableApercuPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between px-6 pt-6 pb-2">
-        <Logo />
-        <LogoutButton />
-      </div>
-
       <div className="px-6 pt-4">
         <h1 className="text-[26px] leading-tight font-semibold">Bonjour {profile?.username ?? ""} 👋</h1>
         <p className="mt-1 text-soft text-[14.5px]">Vue d&apos;ensemble du ministère des enfants.</p>

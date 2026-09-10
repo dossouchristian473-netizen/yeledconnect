@@ -19,7 +19,7 @@ export default async function ParentLayout({ children }: { children: React.React
   }
 
   return (
-    <div className="max-w-[560px] mx-auto min-h-screen pb-[110px] nav:pb-10 nav:pt-[92px]">
+    <div className="max-w-[560px] mx-auto min-h-screen pt-[84px] pb-10">
       {children}
       <BottomNav userId={user.id} />
     </div>

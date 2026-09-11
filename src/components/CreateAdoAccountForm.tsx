@@ -11,7 +11,7 @@ export function CreateAdoAccountForm({
   adoUsername: string | null;
 }) {
   const router = useRouter();
-  const [showReset, setShowReset] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
   const [identifiant, setIdentifiant] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -36,13 +36,25 @@ export function CreateAdoAccountForm({
     router.refresh();
   }
 
-  async function handleReset() {
+  function startEdit() {
+    setIdentifiant(adoUsername ?? "");
+    setPassword("");
+    setError(null);
+    setShowEdit(true);
+  }
+
+  async function handleUpdate() {
     setLoading(true);
     setError(null);
-    const res = await fetch("/api/ado/reset-password", {
+    const identifiantChanged = identifiant.trim() && identifiant.trim() !== adoUsername;
+    const res = await fetch("/api/ado/update", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ childId, password }),
+      body: JSON.stringify({
+        childId,
+        identifiant: identifiantChanged ? identifiant : undefined,
+        password: password || undefined,
+      }),
     });
     const data = await res.json();
     setLoading(false);
@@ -51,7 +63,8 @@ export function CreateAdoAccountForm({
       return;
     }
     setPassword("");
-    setShowReset(false);
+    setShowEdit(false);
+    router.refresh();
   }
 
   if (createdIdentifiant) {
@@ -70,44 +83,57 @@ export function CreateAdoAccountForm({
   }
 
   if (adoUsername) {
+    const hasChanges = (identifiant.trim() && identifiant.trim() !== adoUsername) || password.length >= 6;
     return (
       <div className="bg-card rounded-lg2 shadow-card p-[18px]">
         <h3 className="text-[15px] font-semibold mb-2">Compte ado</h3>
         <p className="text-[14px] text-ink">
           Identifiant : <span className="font-bold">{adoUsername}</span>
         </p>
-        {!showReset ? (
-          <button
-            type="button"
-            onClick={() => setShowReset(true)}
-            className="mt-3 text-blue-dark font-bold text-[13px]"
-          >
-            Réinitialiser le mot de passe
+        {!showEdit ? (
+          <button type="button" onClick={startEdit} className="mt-3 text-blue-dark font-bold text-[13px]">
+            Modifier l&apos;identifiant / le mot de passe
           </button>
         ) : (
           <div className="mt-3 flex flex-col gap-2.5">
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Nouveau mot de passe"
-              minLength={6}
-              className="w-full border border-border rounded-full px-[18px] py-3 text-[14.5px]"
-            />
+            <div>
+              <label className="block text-[11px] font-bold tracking-wide text-faint uppercase mb-1.5">
+                Identifiant
+              </label>
+              <input
+                value={identifiant}
+                onChange={(e) => setIdentifiant(e.target.value)}
+                placeholder="lea.dupont"
+                className="w-full border border-border rounded-full px-[18px] py-3 text-[14.5px]"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold tracking-wide text-faint uppercase mb-1.5">
+                Nouveau mot de passe (laisser vide pour ne pas le changer)
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                minLength={6}
+                className="w-full border border-border rounded-full px-[18px] py-3 text-[14.5px]"
+              />
+            </div>
             {error && <p className="text-danger text-[13px] font-medium">{error}</p>}
             <div className="flex gap-2">
               <button
                 type="button"
-                onClick={handleReset}
-                disabled={loading || password.length < 6}
+                onClick={handleUpdate}
+                disabled={loading || !hasChanges || (password.length > 0 && password.length < 6)}
                 className="rounded-full bg-blue-dark text-white font-bold text-[13px] px-4 py-2.5 disabled:opacity-60"
               >
-                {loading ? "..." : "Valider"}
+                {loading ? "..." : "Enregistrer"}
               </button>
               <button
                 type="button"
                 onClick={() => {
-                  setShowReset(false);
+                  setShowEdit(false);
                   setError(null);
                   setPassword("");
                 }}

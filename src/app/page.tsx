@@ -10,11 +10,14 @@ export default async function RootPage() {
   const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
   const roleNames = roles?.map((r) => r.role) ?? [];
 
+  // Chaque espace atterrit d'abord sur son onglet "Accueil" (le hub
+  // partagé), pas sur sa page fonctionnelle historique (Salle, Recherche,
+  // Aperçu, Comptes) — celles-ci restent accessibles via la nav.
   if (roleNames.includes("parent")) redirect("/accueil");
-  if (roleNames.includes("moniteur")) redirect("/moniteur/salle");
-  if (roleNames.includes("accueil")) redirect("/accueil-staff/recherche");
-  if (roleNames.includes("responsable")) redirect("/responsable/apercu");
-  if (roleNames.includes("administrateur")) redirect("/admin/comptes");
+  if (roleNames.includes("moniteur")) redirect("/moniteur/accueil");
+  if (roleNames.includes("accueil")) redirect("/accueil-staff/accueil");
+  if (roleNames.includes("responsable")) redirect("/responsable/accueil");
+  if (roleNames.includes("administrateur")) redirect("/admin/accueil");
   if (roleNames.includes("ado")) redirect("/ado/exercices");
 
   // Compte authentifié mais sans rôle connu : on affiche un message plutôt que

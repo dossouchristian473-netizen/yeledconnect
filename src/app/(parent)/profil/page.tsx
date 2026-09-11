@@ -3,6 +3,7 @@ import { createClient, getUser } from "@/lib/supabase/server";
 import { SubpageHeader } from "@/components/SubpageHeader";
 import { LogoutButton } from "@/components/LogoutButton";
 import { SpaceSwitcher } from "@/components/SpaceSwitcher";
+import { ProfileEditForm } from "@/components/ProfileEditForm";
 import type { AppRole } from "@/lib/roles";
 
 export default async function ProfilPage() {
@@ -11,7 +12,7 @@ export default async function ProfilPage() {
 
   // Rôles réels de la base (peut en contenir plusieurs : ex. parent + moniteur).
   const [{ data: profile }, { data: family }, { data: roles }] = await Promise.all([
-    supabase.from("profiles").select("username").eq("id", user!.id).single(),
+    supabase.from("profiles").select("username, first_name, last_name, phone").eq("id", user!.id).single(),
     supabase.from("families").select("family_name").eq("parent_id", user!.id).maybeSingle(),
     supabase.from("user_roles").select("role").eq("user_id", user!.id),
   ]);
@@ -41,6 +42,14 @@ export default async function ProfilPage() {
             ))}
           </div>
         </div>
+
+        <ProfileEditForm
+          userId={user!.id}
+          initialFirstName={profile?.first_name ?? null}
+          initialLastName={profile?.last_name ?? null}
+          initialPhone={profile?.phone ?? null}
+          initialEmail={user!.email!}
+        />
 
         <div className="mt-[18px] bg-card rounded-lg2 shadow-card overflow-hidden">
           <Link

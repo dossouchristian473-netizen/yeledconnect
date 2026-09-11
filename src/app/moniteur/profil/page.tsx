@@ -4,6 +4,7 @@ import { SubpageHeader } from "@/components/SubpageHeader";
 import { LogoutButton } from "@/components/LogoutButton";
 import { SpaceSwitcher } from "@/components/SpaceSwitcher";
 import { SharePhoneCard } from "@/components/SharePhoneCard";
+import { ProfileEditForm } from "@/components/ProfileEditForm";
 import type { AppRole } from "@/lib/roles";
 
 export default async function MoniteurProfilPage() {
@@ -12,7 +13,11 @@ export default async function MoniteurProfilPage() {
 
   // Rôles réels de la base (peut en contenir plusieurs : ex. parent + moniteur).
   const [{ data: profile }, { data: roles }, { data: assignments }] = await Promise.all([
-    supabase.from("profiles").select("username, phone, share_phone_with_parents").eq("id", user!.id).single(),
+    supabase
+      .from("profiles")
+      .select("username, first_name, last_name, phone, share_phone_with_parents")
+      .eq("id", user!.id)
+      .single(),
     supabase.from("user_roles").select("role").eq("user_id", user!.id),
     supabase.from("moniteur_rooms").select("rooms(name)").eq("moniteur_id", user!.id),
   ]);
@@ -46,6 +51,15 @@ export default async function MoniteurProfilPage() {
             ))}
           </div>
         </div>
+
+        <ProfileEditForm
+          userId={user!.id}
+          initialFirstName={profile?.first_name ?? null}
+          initialLastName={profile?.last_name ?? null}
+          initialPhone={profile?.phone ?? null}
+          initialEmail={user!.email!}
+          showPhone={false}
+        />
 
         <SharePhoneCard
           userId={user!.id}

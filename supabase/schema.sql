@@ -1117,9 +1117,25 @@ alter table public.children alter column photo_url set not null;
 -- descriptif" du hub d'accueil (même RLS que le reste de rooms : policy
 -- "Responsable/Administrateur gèrent les salles" déjà en place plus haut).
 alter table public.rooms add column if not exists description text;
--- Programme des thèmes/activités prévus pour cette classe sur l'année,
--- éditable au même endroit que la description.
+-- Programme des thèmes/activités prévus pour cette classe sur l'année.
+-- D'abord un champ texte libre (`program`, conservé mais plus utilisé côté
+-- UI), remplacé par un PDF téléversé à la demande de Christian : plus
+-- simple à consulter/imprimer pour un programme déjà mis en page ailleurs.
 alter table public.rooms add column if not exists program text;
+alter table public.rooms add column if not exists program_file_path text;
+
+-- Bucket public (contenu non sensible, comme home-photos) pour les PDF de
+-- programme annuel de chaque classe.
+insert into storage.buckets (id, name, public)
+values ('room-programs', 'room-programs', true)
+on conflict (id) do nothing;
+
+create policy "Responsable/Administrateur gèrent les programmes de classe"
+  on storage.objects for all using (
+    bucket_id = 'room-programs' and (public.has_role('responsable') or public.has_role('administrateur'))
+  ) with check (
+    bucket_id = 'room-programs' and (public.has_role('responsable') or public.has_role('administrateur'))
+  );
 
 create table public.news_posts (
   id uuid primary key default gen_random_uuid(),

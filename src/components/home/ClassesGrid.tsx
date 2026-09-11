@@ -11,7 +11,7 @@ type ClassInfo = {
   color: string | null;
   icon: string | null;
   description: string | null;
-  program: string | null;
+  programUrl: string | null;
   ageRange: string;
   moniteurs: string[];
 };
@@ -20,8 +20,9 @@ export function ClassesGrid({ classes, canEdit }: { classes: ClassInfo[]; canEdi
   const [openId, setOpenId] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [descriptionDraft, setDescriptionDraft] = useState("");
-  const [programDraft, setProgramDraft] = useState("");
+  const [programFile, setProgramFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const supabase = createClient();
   const open = classes.find((c) => c.id === openId) ?? null;
@@ -38,25 +39,41 @@ export function ClassesGrid({ classes, canEdit }: { classes: ClassInfo[]; canEdi
 
   function startEditing() {
     setDescriptionDraft(open?.description ?? "");
-    setProgramDraft(open?.program ?? "");
+    setProgramFile(null);
+    setError(null);
     setEditing(true);
   }
 
   async function saveChanges() {
     if (!open) return;
     setSaving(true);
-    const { error } = await supabase
-      .from("rooms")
-      .update({
-        description: descriptionDraft.trim() || null,
-        program: programDraft.trim() || null,
-      })
-      .eq("id", open.id);
-    setSaving(false);
-    if (!error) {
-      setEditing(false);
-      router.refresh();
+    setError(null);
+
+    const updates: { description: string | null; program_file_path?: string } = {
+      description: descriptionDraft.trim() || null,
+    };
+
+    if (programFile) {
+      const path = `${open.id}/${crypto.randomUUID()}.pdf`;
+      const { error: uploadErr } = await supabase.storage
+        .from("room-programs")
+        .upload(path, programFile, { upsert: true });
+      if (uploadErr) {
+        setError("Le PDF n'a pas pu être envoyé. Réessayez.");
+        setSaving(false);
+        return;
+      }
+      updates.program_file_path = path;
     }
+
+    const { error: updateErr } = await supabase.from("rooms").update(updates).eq("id", open.id);
+    setSaving(false);
+    if (updateErr) {
+      setError("Impossible d'enregistrer. Réessayez.");
+      return;
+    }
+    setEditing(false);
+    router.refresh();
   }
 
   return (
@@ -121,16 +138,31 @@ export function ClassesGrid({ classes, canEdit }: { classes: ClassInfo[]; canEdi
                 </div>
                 <div>
                   <label className="block text-[11px] font-bold tracking-wide text-faint uppercase mb-1.5">
-                    Programme de l&apos;année
+                    Programme de l&apos;année (PDF)
                   </label>
-                  <textarea
-                    value={programDraft}
-                    onChange={(e) => setProgramDraft(e.target.value)}
-                    rows={6}
-                    placeholder={"Septembre : ...\nOctobre : ...\n..."}
-                    className="w-full border border-border rounded-md2 px-4 py-3 text-[14px] resize-none"
-                  />
+                  <label className="flex-1 border border-border rounded-full px-4 py-3 text-[13px] text-soft text-center cursor-pointer block">
+                    {programFile ? programFile.name : open.programUrl ? "Remplacer le PDF" : "Choisir un PDF"}
+                    <input
+                      type="file"
+                      accept="application/pdf"
+                      className="hidden"
+                      onChange={(e) => setProgramFile(e.target.files?.[0] ?? null)}
+                    />
+                  </label>
+                  {open.programUrl && !programFile && (
+                    <a
+                      href={open.programUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-blue-dark text-[12.5px] font-semibold mt-1.5 inline-block"
+                    >
+                      Voir le PDF actuel
+                    </a>
+                  )}
                 </div>
+
+                {error && <p className="text-danger text-[12px] font-medium">{error}</p>}
+
                 <div className="flex gap-2">
                   <button
                     type="button"
@@ -169,9 +201,18 @@ export function ClassesGrid({ classes, canEdit }: { classes: ClassInfo[]; canEdi
                   <div className="text-[11px] font-bold tracking-wide text-faint uppercase mb-1.5">
                     Programme de l&apos;année
                   </div>
-                  <p className="text-[14px] text-ink leading-relaxed whitespace-pre-line">
-                    {open.program || "Aucun programme renseigné pour le moment."}
-                  </p>
+                  {open.programUrl ? (
+                    <a
+                      href={open.programUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1.5 rounded-full bg-blue-bg text-blue-dark font-bold text-[12.5px] px-4 py-2.5"
+                    >
+                      Télécharger le PDF
+                    </a>
+                  ) : (
+                    <p className="text-soft text-[13.5px]">Aucun programme pour le moment.</p>
+                  )}
                 </div>
               </div>
             )}

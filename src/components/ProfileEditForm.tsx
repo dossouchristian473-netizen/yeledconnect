@@ -43,11 +43,18 @@ export function ProfileEditForm({
     setSaving(true);
     setError(null);
 
-    const updates: { first_name: string | null; last_name: string | null; phone?: string | null } = {
+    const updates: { first_name: string | null; last_name: string | null; phone?: string | null; username?: string } = {
       first_name: firstName.trim() || null,
       last_name: lastName.trim() || null,
     };
     if (showPhone) updates.phone = phone.trim() || null;
+
+    // Le nom/prénom affiché ici doit aussi se refléter partout où
+    // "username" sert de nom d'affichage (messagerie, liste des comptes
+    // admin, etc.) — on le fait pointer vers le nom complet dès qu'il y en
+    // a un, plutôt que de garder l'identifiant généré à l'inscription.
+    const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
+    if (fullName) updates.username = fullName;
 
     const { error: profileErr } = await supabase.from("profiles").update(updates).eq("id", userId);
     if (profileErr) {

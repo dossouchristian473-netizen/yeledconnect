@@ -63,6 +63,14 @@ export function ProfileEditForm({
       return;
     }
 
+    // Si ce compte a une famille (espace Parent), son nom affiché ("Famille
+    // X") vient de families.family_name, dérivé du nom à l'inscription —
+    // on le garde synchronisé ici aussi. N'affecte aucune ligne pour les
+    // comptes non-parents (pas d'erreur, juste 0 ligne mise à jour).
+    if (lastName.trim()) {
+      await supabase.from("families").update({ family_name: lastName.trim() }).eq("parent_id", userId);
+    }
+
     if (email.trim() && email.trim() !== initialEmail) {
       const { error: emailErr } = await supabase.auth.updateUser({ email: email.trim() });
       if (emailErr) {

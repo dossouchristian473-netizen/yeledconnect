@@ -1,6 +1,14 @@
 import Link from "next/link";
 
-export function SubpageHeader({ title, backHref = "/accueil" }: { title: string; backHref?: string }) {
+export function SubpageHeader({
+  title,
+  backHref = "/accueil",
+  action,
+}: {
+  title: string;
+  backHref?: string;
+  action?: React.ReactNode;
+}) {
   return (
     <div className="flex items-center gap-3.5 px-5 pt-[22px] pb-[18px]">
       <Link
@@ -12,7 +20,8 @@ export function SubpageHeader({ title, backHref = "/accueil" }: { title: string;
           <path d="M15 5 8 12l7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </Link>
-      <span className="text-[21px] font-semibold">{title}</span>
+      <span className="text-[21px] font-semibold flex-1 min-w-0 truncate">{title}</span>
+      {action && <div className="flex-shrink-0">{action}</div>}
     </div>
   );
 }

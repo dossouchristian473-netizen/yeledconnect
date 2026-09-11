@@ -39,9 +39,17 @@ export default async function ResponsableEnfantsPage({
 
   return (
     <div>
-      <div className="px-6 pt-4">
-        <h1 className="text-[26px] leading-tight font-semibold">Enfants</h1>
-        <p className="mt-1 text-soft text-[14.5px]">Consultez la fiche de n&apos;importe quel enfant inscrit.</p>
+      <div className="px-6 pt-4 flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-[26px] leading-tight font-semibold">Enfants</h1>
+          <p className="mt-1 text-soft text-[14.5px]">Consultez la fiche de n&apos;importe quel enfant inscrit.</p>
+        </div>
+        <Link
+          href="/responsable/annonces"
+          className="rounded-full bg-blue-bg text-blue-dark font-bold text-[12px] px-3.5 py-2 flex-shrink-0"
+        >
+          Annonces
+        </Link>
       </div>
 
       <form action="/responsable/enfants" method="get" className="px-6 pt-3">

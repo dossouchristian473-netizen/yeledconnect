@@ -80,7 +80,18 @@ export default async function MoniteurEnfantsPage() {
 
   return (
     <div>
-      <SubpageHeader title="Enfants" backHref="/moniteur/salle" />
+      <SubpageHeader
+        title="Enfants"
+        backHref="/moniteur/salle"
+        action={
+          <Link
+            href="/moniteur/annonces"
+            className="rounded-full bg-blue-bg text-blue-dark font-bold text-[12px] px-3.5 py-2"
+          >
+            Annonces
+          </Link>
+        }
+      />
       <AttendanceSummary present={presentCount} absent={absentCount} />
       <div className="px-6 pt-4 flex flex-col gap-3.5">
         {children.map((c) => {

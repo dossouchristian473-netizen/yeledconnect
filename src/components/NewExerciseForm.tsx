@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { CONTENT_CATEGORIES, type ContentCategory } from "@/lib/exerciseTypes";
 
 type Room = { id: string; name: string };
 type QuestionDraft = { question: string; choices: [string, string, string, string]; correctIndex: number };
@@ -12,8 +13,9 @@ function emptyQuestion(): QuestionDraft {
   return { question: "", choices: ["", "", "", ""], correctIndex: 0 };
 }
 
-export function NewExerciseForm({ rooms }: { rooms: Room[] }) {
+export function NewExerciseForm({ rooms, listHref = "/responsable/exercices" }: { rooms: Room[]; listHref?: string }) {
   const [type, setType] = useState<ExerciseType>("quiz");
+  const [contentCategory, setContentCategory] = useState<ContentCategory>("devoir");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [roomId, setRoomId] = useState(rooms[0]?.id ?? "");
@@ -88,7 +90,7 @@ export function NewExerciseForm({ rooms }: { rooms: Room[] }) {
         setSaving(false);
         return;
       }
-      router.push("/responsable/exercices");
+      router.push(listHref);
       router.refresh();
       return;
     }
@@ -102,6 +104,7 @@ export function NewExerciseForm({ rooms }: { rooms: Room[] }) {
         created_by: user?.id ?? null,
         type,
         content: type === "texte" ? content.trim() : null,
+        content_category: type === "texte" ? contentCategory : null,
       })
       .select("id")
       .single();
@@ -130,7 +133,7 @@ export function NewExerciseForm({ rooms }: { rooms: Room[] }) {
       }
     }
 
-    router.push("/responsable/exercices");
+    router.push(listHref);
     router.refresh();
   }
 
@@ -198,17 +201,38 @@ export function NewExerciseForm({ rooms }: { rooms: Room[] }) {
       </div>
 
       {type === "texte" && (
-        <div className="bg-card rounded-lg2 shadow-card p-6">
-          <label className="block text-[11.5px] font-bold tracking-wide text-faint uppercase mb-2">
-            Contenu / consignes
-          </label>
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            rows={8}
-            placeholder="Lisez le chapitre 3 et répondez oralement en famille..."
-            className="w-full border border-border rounded-md2 px-4 py-3.5 text-[14.5px] resize-none"
-          />
+        <div className="bg-card rounded-lg2 shadow-card p-6 flex flex-col gap-4">
+          <div>
+            <label className="block text-[11.5px] font-bold tracking-wide text-faint uppercase mb-2">
+              Catégorie
+            </label>
+            <select
+              value={contentCategory}
+              onChange={(e) => setContentCategory(e.target.value as ContentCategory)}
+              className="w-full border border-border rounded-full px-[18px] py-3.5 text-[15px] bg-white"
+            >
+              {CONTENT_CATEGORIES.map((c) => (
+                <option key={c.value} value={c.value}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+            <p className="text-faint text-[11.5px] mt-1.5">
+              Utile pour étiqueter un chant, un poème ou un verset à apprendre par les petits.
+            </p>
+          </div>
+          <div>
+            <label className="block text-[11.5px] font-bold tracking-wide text-faint uppercase mb-2">
+              Contenu / consignes
+            </label>
+            <textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              rows={8}
+              placeholder="Lisez le chapitre 3 et répondez oralement en famille..."
+              className="w-full border border-border rounded-md2 px-4 py-3.5 text-[14.5px] resize-none"
+            />
+          </div>
         </div>
       )}
 

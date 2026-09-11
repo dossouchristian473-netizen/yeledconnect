@@ -1237,3 +1237,69 @@ create view public.moniteur_directory as
   from public.profiles p
   join public.user_roles ur on ur.user_id = p.id and ur.role = 'moniteur';
 
+-- ============================================================
+-- Audit du 2026-09-11 (cahier des charges point par point) — planning
+-- moniteur, tâches génériques, et sous-catégories de contenu enfant.
+-- ============================================================
+
+-- ---------- Planning / astreinte des moniteurs ----------
+-- Un moniteur voit uniquement ses propres dates ; Responsable/Admin
+-- gèrent le planning de tout le monde (assignent qui sert quel dimanche).
+create table public.moniteur_schedule (
+  id uuid primary key default gen_random_uuid(),
+  moniteur_id uuid not null references public.profiles(id) on delete cascade,
+  service_date date not null,
+  room_id uuid references public.rooms(id),
+  notes text,
+  created_by uuid references public.profiles(id),
+  created_at timestamptz not null default now(),
+  unique (moniteur_id, service_date)
+);
+alter table public.moniteur_schedule enable row level security;
+create policy "Un moniteur voit son propre planning"
+  on public.moniteur_schedule for select using (moniteur_id = auth.uid());
+create policy "Responsable/Administrateur gèrent le planning"
+  on public.moniteur_schedule for all using (
+    public.has_role('responsable') or public.has_role('administrateur')
+  ) with check (
+    public.has_role('responsable') or public.has_role('administrateur')
+  );
+
+-- ---------- Tâches génériques ----------
+-- Assignées à un utilisateur précis ; l'assigné peut voir et cocher SA
+-- tâche (pas la modifier autrement), Responsable/Admin gèrent tout.
+create table public.tasks (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  description text,
+  assigned_to uuid references public.profiles(id),
+  due_date date,
+  is_done boolean not null default false,
+  created_by uuid references public.profiles(id),
+  created_at timestamptz not null default now()
+);
+alter table public.tasks enable row level security;
+create policy "Un utilisateur voit ses propres tâches"
+  on public.tasks for select using (assigned_to = auth.uid());
+create policy "Un utilisateur coche sa propre tâche"
+  on public.tasks for update using (assigned_to = auth.uid()) with check (assigned_to = auth.uid());
+create policy "Responsable/Administrateur gèrent toutes les tâches"
+  on public.tasks for all using (
+    public.has_role('responsable') or public.has_role('administrateur')
+  ) with check (
+    public.has_role('responsable') or public.has_role('administrateur')
+  );
+
+-- ---------- Sous-catégories de contenu (chants/poèmes/versets/activités) ----------
+-- Décision : pas de nouveau "type" d'exercice — un chant/poème/verset est
+-- fondamentalement du texte libre (comme 'texte'), donc réutilise le même
+-- mécanisme de stockage (`content`). Cette colonne sert juste à
+-- l'étiqueter différemment dans l'UI pour les classes des petits. Ajoutée
+-- en ADD COLUMN plutôt qu'en élargissant la contrainte CHECK existante sur
+-- `type` (un DROP CONSTRAINT a été bloqué par le garde-fou de sécurité de
+-- la session ayant appliqué cette migration — plus propre de toute façon
+-- de séparer "comment c'est stocké" (type) de "quel genre de contenu"
+-- (content_category)).
+alter table public.exercises add column if not exists content_category text
+  check (content_category in ('devoir', 'chant', 'poeme', 'verset', 'activite'));
+

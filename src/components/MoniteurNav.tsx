@@ -7,6 +7,7 @@ const items: SpaceNavItem[] = [
   { href: "/moniteur/salle", label: "Salle", icon: RoomIcon },
   { href: "/moniteur/enfants", label: "Enfants", icon: KidsIcon },
   { href: "/moniteur/compte-rendu", label: "Compte rendu", icon: ReportIcon },
+  { href: "/moniteur/planning", label: "Planning", icon: PlanningIcon },
   { href: "/moniteur/messages", label: "Messages", icon: MessageIcon, badge: true },
   { href: "/moniteur/profil", label: "Profil", icon: UserIcon },
 ];
@@ -47,6 +48,15 @@ function ReportIcon({ className }: { className?: string }) {
     <svg viewBox="0 0 24 24" fill="none" className={className}>
       <rect x="4.5" y="3.5" width="15" height="17" rx="2.5" stroke="currentColor" strokeWidth="1.8" />
       <path d="M8 8.5h8M8 12.5h8M8 16.5h5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+function PlanningIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
+      <rect x="3.5" y="5" width="17" height="15.5" rx="2.5" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M3.5 9.5h17" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M8 12.5h3M13 12.5h3M8 16.5h3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
     </svg>
   );
 }

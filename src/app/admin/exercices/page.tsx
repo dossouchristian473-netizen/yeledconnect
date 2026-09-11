@@ -5,7 +5,7 @@ import { DeleteRowButton } from "@/components/DeleteRowButton";
 import { unwrapOne } from "@/lib/supabase/one";
 import { exerciseTypeBadge } from "@/lib/exerciseTypes";
 
-export default async function ResponsableExercicesPage() {
+export default async function AdminExercicesPage() {
   const supabase = createClient();
 
   const { data: exercises } = await supabase
@@ -23,7 +23,7 @@ export default async function ResponsableExercicesPage() {
 
   return (
     <div>
-      <SubpageHeader title="Exercices" backHref="/responsable/apercu" />
+      <SubpageHeader title="Exercices" backHref="/admin/accueil" />
 
       <div className="px-6 pt-2 flex flex-col gap-3.5">
         {(!exercises || exercises.length === 0) && (
@@ -55,7 +55,7 @@ export default async function ResponsableExercicesPage() {
         })}
 
         <Link
-          href="/responsable/exercices/nouveau"
+          href="/admin/exercices/nouveau"
           className="flex items-center justify-center gap-2 border-[1.5px] border-dashed border-[#c7d3e0] rounded-md2 py-4 text-blue-dark font-semibold text-[14.5px]"
         >
           + Nouvel exercice

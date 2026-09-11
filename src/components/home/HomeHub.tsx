@@ -5,6 +5,7 @@ import { EventsSection } from "@/components/home/EventsSection";
 import { PhotosSection } from "@/components/home/PhotosSection";
 import { NewsSection } from "@/components/home/NewsSection";
 import { ResourcesSection } from "@/components/home/ResourcesSection";
+import { MyTasksSection } from "@/components/home/MyTasksSection";
 
 // Écran "Accueil" partagé : même contenu pour les 5 espaces (Parent,
 // Moniteur, Accueil, Responsable, Administrateur). À ne pas confondre avec
@@ -26,6 +27,7 @@ export async function HomeHub() {
     <div className="flex flex-col gap-7 pb-4">
       <HeroBanner />
       <ClassesSection canEdit={canEdit} />
+      <MyTasksSection />
       <div className="px-6 grid grid-cols-1 min-[480px]:grid-cols-2 gap-6">
         <EventsSection canEdit={canEdit} />
         <PhotosSection canEdit={canEdit} />

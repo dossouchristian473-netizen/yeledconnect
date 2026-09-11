@@ -5,10 +5,13 @@ import { SpaceNav, type SpaceNavItem } from "@/components/SpaceNav";
 const items: SpaceNavItem[] = [
   { href: "/responsable/accueil", label: "Accueil", icon: HomeIcon },
   { href: "/responsable/apercu", label: "Aperçu", icon: ChartIcon },
+  { href: "/responsable/enfants", label: "Enfants", icon: KidsIcon },
   { href: "/responsable/presences", label: "Présences", icon: CheckIcon },
   { href: "/responsable/salles", label: "Salles", icon: RoomIcon },
   { href: "/responsable/agenda", label: "Agenda", icon: CalendarIcon },
   { href: "/responsable/exercices", label: "Exercices", icon: QuizIcon },
+  { href: "/responsable/planning", label: "Planning", icon: PlanningIcon },
+  { href: "/responsable/taches", label: "Tâches", icon: TaskIcon },
   { href: "/responsable/profil", label: "Profil", icon: UserIcon },
 ];
 
@@ -71,6 +74,33 @@ function UserIcon({ className }: { className?: string }) {
     <svg viewBox="0 0 24 24" fill="none" className={className}>
       <circle cx="12" cy="8" r="3.6" stroke="currentColor" strokeWidth="1.8" />
       <path d="M4.5 20c1-4.4 4-6.8 7.5-6.8s6.5 2.4 7.5 6.8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+function KidsIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
+      <circle cx="8" cy="8" r="3" stroke="currentColor" strokeWidth="1.8" />
+      <circle cx="17" cy="9" r="2.4" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M2.5 20c.6-3.6 2.9-5.6 5.5-5.6s4.9 2 5.5 5.6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M14.5 20c.4-2.6 1.9-4.2 3.9-4.2 1.7 0 3.1 1.1 3.6 3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+function PlanningIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
+      <rect x="3.5" y="5" width="17" height="15.5" rx="2.5" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M3.5 9.5h17" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M8 12.5h3M13 12.5h3M8 16.5h3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+function TaskIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
+      <rect x="4.5" y="3.5" width="15" height="17" rx="2.5" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M8.5 12l2 2 4-4.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }

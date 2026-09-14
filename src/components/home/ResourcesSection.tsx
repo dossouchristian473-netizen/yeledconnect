@@ -24,35 +24,35 @@ export async function ResourcesSection({ canEdit }: { canEdit: boolean }) {
           {resources.map((r) => {
             const youtubeId = r.resource_type === "video" ? getYouTubeId(r.url) : null;
             return (
-              <a
+              <div
                 key={r.id}
-                href={r.url}
-                target="_blank"
-                rel="noreferrer"
                 className="bg-card rounded-md2 shadow-card p-[14px] flex items-center gap-3"
               >
-                {youtubeId ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={`https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`}
-                    alt=""
-                    className="w-[68px] h-[48px] rounded-md2 object-cover flex-shrink-0"
-                  />
-                ) : (
-                  <span className="w-[68px] h-[48px] rounded-md2 bg-blue-bg flex items-center justify-center text-[20px] flex-shrink-0">
-                    🔗
-                  </span>
-                )}
-                <div className="min-w-0 flex-1">
-                  <div className="font-bold text-[13.5px] truncate">{r.title}</div>
-                  {r.description && <p className="text-soft text-[12px] mt-0.5 line-clamp-2">{r.description}</p>}
-                </div>
-                {canEdit && (
-                  <div onClick={(e) => e.preventDefault()}>
-                    <DeleteRowButton table="spiritual_resources" id={r.id} />
+                <a
+                  href={r.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-3 flex-1 min-w-0"
+                >
+                  {youtubeId ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={`https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`}
+                      alt=""
+                      className="w-[68px] h-[48px] rounded-md2 object-cover flex-shrink-0"
+                    />
+                  ) : (
+                    <span className="w-[68px] h-[48px] rounded-md2 bg-blue-bg flex items-center justify-center text-[20px] flex-shrink-0">
+                      🔗
+                    </span>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <div className="font-bold text-[13.5px] truncate">{r.title}</div>
+                    {r.description && <p className="text-soft text-[12px] mt-0.5 line-clamp-2">{r.description}</p>}
                   </div>
-                )}
-              </a>
+                </a>
+                {canEdit && <DeleteRowButton table="spiritual_resources" id={r.id} />}
+              </div>
             );
           })}
         </div>

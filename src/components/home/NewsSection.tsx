@@ -9,25 +9,36 @@ export async function NewsSection({ canEdit }: { canEdit: boolean }) {
 
   const { data: news } = await supabase
     .from("news_posts")
-    .select("id, title, content")
+    .select("id, title, content, image_path")
     .order("created_at", { ascending: false })
     .limit(6);
+
+  const items = (news ?? []).map((n) => ({
+    ...n,
+    imageUrl: n.image_path ? supabase.storage.from("home-photos").getPublicUrl(n.image_path).data.publicUrl : null,
+  }));
 
   return (
     <section id="nouvelles" className="scroll-mt-24">
       <h2 className="text-[16.5px] font-semibold mb-3">Nouvelles d&apos;IJ</h2>
 
-      {!news || news.length === 0 ? (
+      {items.length === 0 ? (
         <p className="text-soft text-[13.5px]">Aucune nouvelle pour le moment.</p>
       ) : (
         <div className="flex flex-col gap-2.5">
-          {news.map((n) => (
-            <div key={n.id} className="bg-card rounded-md2 shadow-card p-[14px] flex items-start justify-between gap-2">
-              <div className="min-w-0">
-                <div className="font-bold text-[13.5px]">{n.title}</div>
-                <NewsItemContent content={n.content} />
+          {items.map((n) => (
+            <div key={n.id} className="bg-card rounded-md2 shadow-card overflow-hidden">
+              {n.imageUrl && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={n.imageUrl} alt="" className="w-full h-[140px] object-cover" />
+              )}
+              <div className="p-[14px] flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="font-bold text-[13.5px]">{n.title}</div>
+                  <NewsItemContent content={n.content} />
+                </div>
+                {canEdit && <DeleteRowButton table="news_posts" id={n.id} />}
               </div>
-              {canEdit && <DeleteRowButton table="news_posts" id={n.id} />}
             </div>
           ))}
         </div>

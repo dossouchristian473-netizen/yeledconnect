@@ -24,7 +24,14 @@ export default async function MessagesPage() {
 
   return (
     <div>
-      <SubpageHeader title="Messages" />
+      <SubpageHeader
+        title="Messages"
+        action={
+          <Link href="/annonces" className="rounded-full bg-blue-bg text-blue-dark font-bold text-[12px] px-3.5 py-2">
+            Annonces
+          </Link>
+        }
+      />
       <div className="px-6 flex flex-col gap-4">
         {contacts && contacts.length > 0 && (
           <div>

@@ -4,6 +4,7 @@ import { getChildPhotoUrl } from "@/lib/supabase/childPhoto";
 import { unwrapOne } from "@/lib/supabase/one";
 import { SubpageHeader } from "@/components/SubpageHeader";
 import { ChildEditForm } from "@/components/ChildEditForm";
+import { DeleteChildButton } from "@/components/DeleteChildButton";
 
 export default async function ModifierEnfantPage({ params }: { params: { id: string } }) {
   const supabase = createClient();
@@ -29,6 +30,12 @@ export default async function ModifierEnfantPage({ params }: { params: { id: str
         photoUrl={photoUrl}
         backHref={`/enfants/${child.id}`}
         initialRoomColor={roomColor}
+      />
+      <DeleteChildButton
+        childId={child.id}
+        firstName={child.first_name}
+        photoPath={child.photo_url}
+        redirectTo="/enfants"
       />
     </div>
   );

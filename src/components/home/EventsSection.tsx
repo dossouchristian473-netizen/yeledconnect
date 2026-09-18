@@ -30,7 +30,7 @@ export async function EventsSection({ canEdit }: { canEdit: boolean }) {
               <div className="min-w-0">
                 <div className="font-bold text-[13.5px] truncate">{e.title}</div>
                 <div className="text-faint text-[11.5px] mt-0.5">
-                  {new Date(e.event_date).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}
+                  {new Date(e.event_date).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}
                 </div>
               </div>
               {canEdit && <DeleteRowButton table="events" id={e.id} />}

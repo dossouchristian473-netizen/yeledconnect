@@ -1,8 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
-import { DeleteRowButton } from "@/components/DeleteRowButton";
 import { SectionEditToggle } from "@/components/home/SectionEditToggle";
 import { NewsAddForm } from "@/components/home/NewsAddForm";
-import { NewsItemContent } from "@/components/home/NewsItemContent";
+import { NewsItemCard } from "@/components/home/NewsItemCard";
 
 export async function NewsSection({ canEdit }: { canEdit: boolean }) {
   const supabase = createClient();
@@ -27,19 +26,7 @@ export async function NewsSection({ canEdit }: { canEdit: boolean }) {
       ) : (
         <div className="flex flex-col gap-2.5">
           {items.map((n) => (
-            <div key={n.id} className="bg-card rounded-md2 shadow-card overflow-hidden">
-              {n.imageUrl && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={n.imageUrl} alt="" className="w-full h-[140px] object-cover" />
-              )}
-              <div className="p-[14px] flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <div className="font-bold text-[13.5px]">{n.title}</div>
-                  <NewsItemContent content={n.content} />
-                </div>
-                {canEdit && <DeleteRowButton table="news_posts" id={n.id} />}
-              </div>
-            </div>
+            <NewsItemCard key={n.id} item={n} canEdit={canEdit} />
           ))}
         </div>
       )}

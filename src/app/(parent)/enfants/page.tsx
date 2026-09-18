@@ -37,7 +37,14 @@ export default async function EnfantsPage() {
   if (!children || children.length === 0) {
     return (
       <div>
-        <SubpageHeader title="Mes enfants" />
+        <SubpageHeader
+          title="Mes enfants"
+          action={
+            <Link href="/annonces" className="rounded-full bg-blue-bg text-blue-dark font-bold text-[12px] px-3.5 py-2">
+              Annonces
+            </Link>
+          }
+        />
         <div className="flex flex-col items-center text-center px-8 pt-12">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/brand/illustration-enfants.webp" alt="" className="w-[220px] mb-6" aria-hidden />
@@ -59,7 +66,14 @@ export default async function EnfantsPage() {
 
   return (
     <div>
-      <SubpageHeader title="Mes enfants" />
+      <SubpageHeader
+        title="Mes enfants"
+        action={
+          <Link href="/annonces" className="rounded-full bg-blue-bg text-blue-dark font-bold text-[12px] px-3.5 py-2">
+            Annonces
+          </Link>
+        }
+      />
       <div className="px-6 pt-5 flex flex-col gap-3.5">
         {children.map((c) => {
           const room = unwrapOne<Room>(c.room);

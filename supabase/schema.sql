@@ -1303,3 +1303,31 @@ create policy "Responsable/Administrateur gèrent toutes les tâches"
 alter table public.exercises add column if not exists content_category text
   check (content_category in ('devoir', 'chant', 'poeme', 'verset', 'activite'));
 
+-- ---------- Un moniteur crée des exercices pour sa propre salle ----------
+-- Jusqu'ici seuls responsable/administrateur pouvaient écrire dans
+-- exercises/exercise_questions ; le moniteur n'avait que la lecture
+-- ouverte à tout utilisateur connecté. Même style de policy que
+-- "Un moniteur gère les annonces de sa salle" (subquery directe sur
+-- moniteur_rooms, pas de fonction SECURITY DEFINER nécessaire ici).
+create policy "Un moniteur gère les exercices de sa salle"
+  on public.exercises for all using (
+    room_id in (select room_id from public.moniteur_rooms where moniteur_id = auth.uid())
+  ) with check (
+    room_id in (select room_id from public.moniteur_rooms where moniteur_id = auth.uid())
+  );
+
+create policy "Un moniteur gère les questions de ses exercices"
+  on public.exercise_questions for all using (
+    exercise_id in (
+      select e.id from public.exercises e
+      join public.moniteur_rooms mr on mr.room_id = e.room_id
+      where mr.moniteur_id = auth.uid()
+    )
+  ) with check (
+    exercise_id in (
+      select e.id from public.exercises e
+      join public.moniteur_rooms mr on mr.room_id = e.room_id
+      where mr.moniteur_id = auth.uid()
+    )
+  );
+

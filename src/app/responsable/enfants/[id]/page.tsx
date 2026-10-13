@@ -5,6 +5,7 @@ import { unwrapOne } from "@/lib/supabase/one";
 import { SubpageHeader } from "@/components/SubpageHeader";
 import { ChildAvatar } from "@/components/ChildAvatar";
 import { RoomIcon } from "@/components/RoomIcon";
+import { DeleteChildButton } from "@/components/DeleteChildButton";
 
 type Room = { name: string; color: string | null; icon: string | null };
 
@@ -206,6 +207,13 @@ export default async function ResponsableEnfantDetailPage({ params }: { params: 
           )}
         </div>
       </div>
+
+      <DeleteChildButton
+        childId={child.id}
+        firstName={child.first_name}
+        photoPath={child.photo_url}
+        redirectTo="/responsable/enfants"
+      />
     </div>
   );
 }

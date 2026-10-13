@@ -1331,3 +1331,21 @@ create policy "Un moniteur gère les questions de ses exercices"
     )
   );
 
+
+-- ---------- Responsable : ajouter et supprimer des enfants ----------
+-- Jusqu'ici le responsable ne faisait que lire les fiches enfants. Il peut
+-- maintenant en créer pour un parent (en créant sa famille si besoin) et en
+-- supprimer, comme l'administrateur. Pas de modification de fiche ici
+-- (non demandée) : insert/delete seulement.
+create policy "Responsable ajoute des enfants"
+  on public.children for insert with check (public.has_role('responsable'));
+create policy "Responsable supprime des enfants"
+  on public.children for delete using (public.has_role('responsable'));
+create policy "Responsable crée la famille d'un parent"
+  on public.families for insert with check (public.has_role('responsable'));
+create policy "Responsable gère les photos des enfants"
+  on storage.objects for all using (
+    bucket_id = 'child-photos' and public.has_role('responsable')
+  ) with check (
+    bucket_id = 'child-photos' and public.has_role('responsable')
+  );

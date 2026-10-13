@@ -42,7 +42,7 @@ export default async function ResponsableEnfantsPage({
       <div className="px-6 pt-4 flex items-start justify-between gap-3">
         <div>
           <h1 className="text-[26px] leading-tight font-semibold">Enfants</h1>
-          <p className="mt-1 text-soft text-[14.5px]">Consultez la fiche de n&apos;importe quel enfant inscrit.</p>
+          <p className="mt-1 text-soft text-[14.5px]">Consultez, ajoutez ou supprimez la fiche d&apos;un enfant.</p>
         </div>
         <Link
           href="/responsable/annonces"
@@ -92,6 +92,13 @@ export default async function ResponsableEnfantsPage({
             </Link>
           );
         })}
+
+        <Link
+          href="/responsable/enfants/nouveau"
+          className="flex items-center justify-center gap-2 border-[1.5px] border-dashed border-[#c7d3e0] rounded-md2 py-4 text-blue-dark font-semibold text-[14.5px]"
+        >
+          + Ajouter un enfant
+        </Link>
       </div>
     </div>
   );

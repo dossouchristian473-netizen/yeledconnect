@@ -6,6 +6,7 @@ import { unwrapOne } from "@/lib/supabase/one";
 import { SubpageHeader } from "@/components/SubpageHeader";
 import { ChildEditForm } from "@/components/ChildEditForm";
 import { CreateAdoAccountForm } from "@/components/CreateAdoAccountForm";
+import { DeleteChildButton } from "@/components/DeleteChildButton";
 
 export default async function AdminEnfantDetailPage({ params }: { params: { id: string } }) {
   const supabase = createClient();
@@ -77,6 +78,12 @@ export default async function AdminEnfantDetailPage({ params }: { params: { id: 
         </div>
       </div>
       <ChildEditForm child={child} photoUrl={photoUrl} backHref="/admin/enfants" rooms={rooms ?? []} />
+      <DeleteChildButton
+        childId={child.id}
+        firstName={child.first_name}
+        photoPath={child.photo_url}
+        redirectTo="/admin/enfants"
+      />
     </div>
   );
 }

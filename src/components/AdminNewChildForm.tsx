@@ -4,7 +4,13 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
-export function AdminNewChildForm({ parents }: { parents: { id: string; username: string }[] }) {
+export function AdminNewChildForm({
+  parents,
+  basePath = "/admin/enfants",
+}: {
+  parents: { id: string; username: string }[];
+  basePath?: string;
+}) {
   const router = useRouter();
   const supabase = createClient();
 
@@ -90,7 +96,7 @@ export function AdminNewChildForm({ parents }: { parents: { id: string; username
       return;
     }
 
-    router.push(`/admin/enfants/${childId}`);
+    router.push(`${basePath}/${childId}`);
     router.refresh();
   }
 

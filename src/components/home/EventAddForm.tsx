@@ -4,9 +4,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
-export function EventAddForm() {
+type Room = { id: string; name: string };
+
+export function EventAddForm({ rooms }: { rooms: Room[] }) {
   const [title, setTitle] = useState("");
   const [eventDate, setEventDate] = useState("");
+  const [roomId, setRoomId] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -25,6 +28,7 @@ export function EventAddForm() {
     const { error: insertErr } = await supabase.from("events").insert({
       title: title.trim(),
       event_date: eventDate,
+      room_id: roomId || null,
       created_by: user?.id ?? null,
     });
 
@@ -36,6 +40,7 @@ export function EventAddForm() {
 
     setTitle("");
     setEventDate("");
+    setRoomId("");
     router.refresh();
   }
 
@@ -53,6 +58,18 @@ export function EventAddForm() {
         onChange={(e) => setEventDate(e.target.value)}
         className="w-full border border-border rounded-full px-4 py-2.5 text-[13.5px]"
       />
+      <select
+        value={roomId}
+        onChange={(e) => setRoomId(e.target.value)}
+        className="w-full border border-border rounded-full px-4 py-2.5 text-[13.5px] bg-white"
+      >
+        <option value="">Toutes les classes</option>
+        {rooms.map((r) => (
+          <option key={r.id} value={r.id}>
+            {r.name}
+          </option>
+        ))}
+      </select>
       {error && <p className="text-danger text-[12px] font-medium">{error}</p>}
       <button
         type="submit"

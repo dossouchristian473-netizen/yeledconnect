@@ -1,11 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
+import { unwrapOne } from "@/lib/supabase/one";
 import { SubpageHeader } from "@/components/SubpageHeader";
 
 export default async function AgendaPage() {
   const supabase = createClient();
   const { data: events } = await supabase
     .from("events")
-    .select("id, title, description, event_date")
+    .select("id, title, description, event_date, room:room_id(name)")
     .gte("event_date", new Date().toISOString().slice(0, 10))
     .order("event_date", { ascending: true });
 
@@ -32,15 +33,21 @@ export default async function AgendaPage() {
     <div>
       <SubpageHeader title="Agenda" />
       <div className="px-6 pt-5 flex flex-col gap-3.5">
-        {events.map((e) => (
-          <div key={e.id} className="bg-card rounded-md2 shadow-card p-[18px]">
-            <div className="text-faint text-[12.5px] font-semibold mb-1">
-              {new Date(e.event_date).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}
+        {events.map((e) => {
+          const room = unwrapOne<{ name: string }>(e.room);
+          return (
+            <div key={e.id} className="bg-card rounded-md2 shadow-card p-[18px]">
+              <div className="text-faint text-[12.5px] font-semibold mb-1">
+                {new Date(e.event_date).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+              </div>
+              <div className="font-bold text-[15.5px]">{e.title}</div>
+              <span className="inline-block mt-1.5 rounded-full bg-blue-bg text-blue-dark font-bold text-[10.5px] tracking-wide uppercase px-2.5 py-[3px]">
+                {room ? `Classe ${room.name}` : "Toutes les classes"}
+              </span>
+              {e.description && <p className="text-soft text-[13.5px] mt-1">{e.description}</p>}
             </div>
-            <div className="font-bold text-[15.5px]">{e.title}</div>
-            {e.description && <p className="text-soft text-[13.5px] mt-1">{e.description}</p>}
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

@@ -1,19 +1,26 @@
 import { createClient } from "@/lib/supabase/server";
 import { unwrapOne } from "@/lib/supabase/one";
+import { parentEventsFilter } from "@/lib/parentEvents";
 import { DeleteRowButton } from "@/components/DeleteRowButton";
 import { SectionEditToggle } from "@/components/home/SectionEditToggle";
 import { EventAddForm } from "@/components/home/EventAddForm";
 
-export async function EventsSection({ canEdit }: { canEdit: boolean }) {
+export async function EventsSection({
+  canEdit,
+  parentRoomIds,
+}: {
+  canEdit: boolean;
+  parentRoomIds: string[] | null;
+}) {
   const supabase = createClient();
   const today = new Date().toISOString().slice(0, 10);
 
-  const { data: events } = await supabase
+  let query = supabase
     .from("events")
     .select("id, title, event_date, room:room_id(name)")
-    .gte("event_date", today)
-    .order("event_date", { ascending: true })
-    .limit(6);
+    .gte("event_date", today);
+  if (parentRoomIds) query = query.or(parentEventsFilter(parentRoomIds));
+  const { data: events } = await query.order("event_date", { ascending: true }).limit(6);
 
   const { data: rooms } = canEdit
     ? await supabase.from("rooms").select("id, name").order("name")

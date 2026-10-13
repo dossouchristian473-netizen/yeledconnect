@@ -1,12 +1,17 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getUser } from "@/lib/supabase/server";
 import { unwrapOne } from "@/lib/supabase/one";
+import { getParentEventRoomIds, parentEventsFilter } from "@/lib/parentEvents";
 import { SubpageHeader } from "@/components/SubpageHeader";
 
 export default async function AgendaPage() {
   const supabase = createClient();
+  const user = await getUser();
+  const roomIds = await getParentEventRoomIds(supabase, user!.id);
+
   const { data: events } = await supabase
     .from("events")
     .select("id, title, description, event_date, room:room_id(name)")
+    .or(parentEventsFilter(roomIds))
     .gte("event_date", new Date().toISOString().slice(0, 10))
     .order("event_date", { ascending: true });
 

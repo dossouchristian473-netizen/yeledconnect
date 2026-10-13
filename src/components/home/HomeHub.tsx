@@ -6,6 +6,7 @@ import { PhotosSection } from "@/components/home/PhotosSection";
 import { NewsSection } from "@/components/home/NewsSection";
 import { ResourcesSection } from "@/components/home/ResourcesSection";
 import { MyTasksSection } from "@/components/home/MyTasksSection";
+import { getParentEventRoomIds } from "@/lib/parentEvents";
 
 // Écran "Accueil" partagé : même contenu pour les 5 espaces (Parent,
 // Moniteur, Accueil, Responsable, Administrateur). À ne pas confondre avec
@@ -19,6 +20,8 @@ export async function HomeHub() {
 
   const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", user!.id);
   const canEdit = roles?.some((r) => r.role === "responsable" || r.role === "administrateur") ?? false;
+  const isParentOnly = !(roles ?? []).some((r) => r.role !== "parent");
+  const parentRoomIds = isParentOnly ? await getParentEventRoomIds(supabase, user!.id) : null;
 
   return (
     // Le layout de l'espace (parent/moniteur/accueil/responsable/admin/ado)
@@ -29,7 +32,7 @@ export async function HomeHub() {
       <ClassesSection canEdit={canEdit} />
       <MyTasksSection />
       <div className="px-6 grid grid-cols-1 min-[480px]:grid-cols-2 gap-6">
-        <EventsSection canEdit={canEdit} />
+        <EventsSection canEdit={canEdit} parentRoomIds={parentRoomIds} />
         <PhotosSection canEdit={canEdit} />
       </div>
       <div className="px-6 grid grid-cols-1 min-[480px]:grid-cols-2 gap-6">
